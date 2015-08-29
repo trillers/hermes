@@ -1,2 +1,2 @@
-var dispatcher = require('./MyDispatcher')();
-module.exports= dispatcher
+var createDispatcher = require('./MyDispatcher');
+module.exports= createDispatcher
