@@ -42,7 +42,7 @@ CarApplication.prototype.handle = function(cmd){
 var app = new CarApplication()
 init(app, function(){
     process.nextTick(function(){
-        app.handle({name: "callFastCar"})
+        app.handle({name: "callFastCar", from: "中关村软件园", to: "通县", startTime: "2-03-30", user: {phone: '13544565678'}})
     })
 });
 
