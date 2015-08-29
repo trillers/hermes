@@ -21,6 +21,7 @@
     "log4js": "^0.6.26",
     "mongoose": "^4.1.2",
     "nightmare": "^1.8.2",
+    "phantom": "^0.7.2",
     "redis": "~0.12.1",
     "redis-sentinel": "^0.3.3",
     "request": "^2.61.0",

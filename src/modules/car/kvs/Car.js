@@ -8,7 +8,7 @@ var serviceProviderKey = function(){
 }
 var kv = {}
 kv.getAuthInfo = function(callback){
-    redis.hgetall(serviceProviderKey, function(err, result){
+    redis.hgetall(serviceProviderKey(), function(err, result){
         cbUtil.logCallback(
             err,
             'Fail to load service provider info: ' + err,
@@ -17,12 +17,12 @@ kv.getAuthInfo = function(callback){
     });
 }
 kv.setAuthInfo = function(json, callback){
-    redis.hmset(serviceProviderKey, json, function(err, result){
+    redis.hmset(serviceProviderKey(), json, function(err, result){
         cbUtil.logCallback(
             err,
             'Fail to save service provider info: ' + err,
             'Succeed to save service provider info');
-        cbUtil.handleOk(callback, err, result);
+        cbUtil.handleOk(callback, err, result, json);
     })
 }
-module.exports = kv;
+module.exports = Promise.promisifyAll(kv);
