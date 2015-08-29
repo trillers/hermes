@@ -1,7 +1,7 @@
 var createDispatcher = require('../framework/MyDispatcher');
 var createQueue = require('../framework/MyQueue');
-var sp = require('hermes-settings').serviceItem.car
-var Nightmare = require('nightmare')
+var sp = require('hermes-settings').serviceItem.car;
+var Nightmare = require('nightmare');
 function createWorker(app){
     var worker = {};
     worker.dispatcher = createDispatcher();
@@ -16,23 +16,26 @@ function startUp(worker, application){
     worker.phantom = new Nightmare();
     worker.phantom
         .goto(sp.url)
-        .click();
+        .click("ul#headnav>li:nth-child(2)")
+        .wait();
     worker.phantom.run(function(){
-        application.emit('startup')
+        process.nextTick(function(){
+            application.emit('startup')
+        })
     });
 
 }
 function composeHandler(worker){
     return function(cmd){
         var me = worker;
-        me.dispatch(handle, function(){
+        me.dispatcher.dispatch(handle, function(){
 
         })
     }
-
 }
 function handle(){
     //place order
+    console.log("placed")
 }
 module.exports = function(app){
     return createWorker(app)
