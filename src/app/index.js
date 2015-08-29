@@ -1,5 +1,5 @@
 var app = require('./application');
-var settings = require('athena-settings');
+var settings = require('hermes-settings');
 var logger = require('./logging').logger;
 var system = require('./system');
 var application = require('./application');

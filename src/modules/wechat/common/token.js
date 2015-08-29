@@ -1,4 +1,4 @@
-var settings = require('athena-settings');
+var settings = require('hermes-settings');
 var wechat = require('./api');
 var Promise = require('bluebird');
 

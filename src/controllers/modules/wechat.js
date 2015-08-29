@@ -1,4 +1,4 @@
-var settings = require('athena-settings');
+var settings = require('hermes-settings');
 var Frankon = require('../../framework/frankon');
 var Router = require('koa-router');
 var co = require('co');

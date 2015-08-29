@@ -1,4 +1,4 @@
-var settings = require('athena-settings');
+var settings = require('hermes-settings');
 var util = require('util');
 var logger = require('../../app/logging').logger;
 var ApiReturn = require('../../framework/ApiReturn');
