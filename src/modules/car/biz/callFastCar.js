@@ -18,7 +18,7 @@ function handle(cmd, callback){
     })
     .then(function(nightmare){
         return fillPhone(userBiz.phone, nightmare);
-    })  
+    })
     .then(function(nightmare){
         nightmare.click('#submitcall')
             .run(function(){
