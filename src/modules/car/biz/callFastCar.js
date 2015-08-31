@@ -1,37 +1,8 @@
-var createDispatcher = require('../framework/MyDispatcher');
-var createQueue = require('../framework/MyQueue');
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
-var thunkify = require('thunkify');
 var carService = require('../services/CarService');
-var co = require('co');
+var createWorker = require('./workerFactory')
 
-function createWorker(app){
-    var worker = {};
-    worker.dispatcher = createDispatcher();
-    for(var i=0; i<3; i++){
-        worker.dispatcher.registry(createQueue(1));
-    }
-    worker.handle = composeHandler(worker);
-    startUp(worker, app);
-    return worker;
-}
-function startUp(worker, application){
-    worker.phantom = new Nightmare({cookiesFile: __dirname + 'nightmarecookie'});
-    co(function* (){
-        yield carService.signIn(worker.phantom);
-        process.nextTick(function(){
-            application.emit('startup')
-        })
-    })
-}
-function composeHandler(worker){
-    return function(cmd){
-        var me = worker;
-        var thunkHandler = thunkify(handle.bind(me));
-        me.dispatcher.dispatch(thunkHandler(cmd), function(){})
-    }
-}
 function handle(cmd, callback){
     var startTime = cmd.startTime;
     var fromAddress = cmd.from;
@@ -40,21 +11,18 @@ function handle(cmd, callback){
     var nightmare = this;
     fillStartTime(startTime, nightmare)
     .then(function(nightmare){
-            console.log("ok1")
         return fillFromAddress(fromAddress, nightmare);
     })
     .then(function(nightmare){
-            console.log('ok2')
         return fillToAddress(toAddress, nightmare);
     })
     .then(function(nightmare){
-            console.log('ok3')
         return fillPhone(userBiz.phone, nightmare);
     })
     .then(function(nightmare){
         nightmare.click('#submitcall')
             .run(function(){
-                console.log("placed");
+                console.log("succeed to place order");
                 return callback(null, null)
             })
     })
@@ -95,9 +63,6 @@ function fillFromAddress(from, nightmare){
                 var item = list[4];
                 item.childNodes[0].childNodes[0].click()
                 return
-                //var e = document.createEvent('MouseEvents');
-                //e.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-                //item.dispatchEvent(e);
             }, function(item){
                 return;
             })
@@ -132,5 +97,5 @@ function fillPhone(phone, nightmare){
     })
 }
 module.exports = function(app){
-    return createWorker(app)
+    return createWorker(app, handle)
 };
