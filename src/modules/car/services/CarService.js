@@ -15,19 +15,26 @@ var locator = {
 };
 
 var callFastCarNightMare = new Nightmare().goto('http://es.xiaojukeji.com/InsteadCar/fastCar')
-Service.signIn = function* (){
+Service.signIn = function* (nightmare){
     try {
         var username, password;
         var info = yield cskv.getAuthInfoAsync();
         username = info.username;
         password = info.password;
-        var nightmare = new Nightmare()
+        nightmare
             .goto(url + '/Auth/login')
             .type(locator.username, username)
             .type(locator.password, password)
             .click(locator.submitInput)
             .wait('a.user-name')
+            .evaluate(function(){
+                return document.title
+            }, function(title){
+                console.log('startup document title---------')
+                console.log(JSON.stringify(title));
+            })
         var result = yield nightmare.run();
+        return;
     }catch(err){
         console.log(err)
     }

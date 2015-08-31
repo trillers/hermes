@@ -16,10 +16,7 @@ function CarApplication(){
 util.inherits(CarApplication, EventEmitter);
 function init(app, callback){
     app.on('startup', workStartUpHandler(callback));
-    co(function* (){
-        yield carService.signIn();
-        startupWorker(app)
-    })
+    startupWorker(app)
 }
 function startupWorker(app){
     for(var prop in BizProcess){

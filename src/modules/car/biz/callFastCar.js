@@ -3,6 +3,9 @@ var createQueue = require('../framework/MyQueue');
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
 var thunkify = require('thunkify');
+var carService = require('../services/CarService');
+var co = require('co');
+
 function createWorker(app){
     var worker = {};
     worker.dispatcher = createDispatcher();
@@ -14,22 +17,18 @@ function createWorker(app){
     return worker;
 }
 function startUp(worker, application){
-    worker.phantom = new Nightmare();
-    worker.phantom
-        .goto(sp.url)
-        .click("ul#headnav>li:nth-child(2)")
-        .wait();
-    worker.phantom.run(function(err, nightmare){
-        worker.phantom = nightmare;
+    worker.phantom = new Nightmare({cookiesFile: __dirname + 'nightmarecookie'});
+    co(function* (){
+        yield carService.signIn(worker.phantom);
         process.nextTick(function(){
             application.emit('startup')
         })
-    });
+    })
 }
 function composeHandler(worker){
     return function(cmd){
         var me = worker;
-        var thunkHandler = thunkify(handle.bind(worker));
+        var thunkHandler = thunkify(handle.bind(me));
         me.dispatcher.dispatch(thunkHandler(cmd), function(){})
     }
 }
@@ -38,112 +37,98 @@ function handle(cmd, callback){
     var fromAddress = cmd.from;
     var toAddress = cmd.to;
     var userBiz = cmd.user;
-    fillStartTime(startTime, this)
-    .then(function(){
-            console.log("ok")
-        //return fillFromAddress(fromAddress, this);
+    var nightmare = this;
+    fillStartTime(startTime, nightmare)
+    .then(function(nightmare){
+            console.log("ok1")
+        return fillFromAddress(fromAddress, nightmare);
     })
-    //.then(function(){
-    //    return fillToAddress(toAddress, this);
-    //})
-    //.then(function(){
-    //    return fillPhone(userBiz.phone, this);
-    //})
-    //.then(function(nightmare){
-    //    nightmare.click('#submitcall')
-    //        .run(function(){
-    //            console.log("placed");
-    //            callback(null, null)
-    //        })
-    //})
-    //.catch(function(err){
-    //    console.log("err occur------------------")
-    //    console.log(err)
-    //})
+    .then(function(nightmare){
+            console.log('ok2')
+        return fillToAddress(toAddress, nightmare);
+    })
+    .then(function(nightmare){
+            console.log('ok3')
+        return fillPhone(userBiz.phone, nightmare);
+    })
+    .then(function(nightmare){
+        nightmare.click('#submitcall')
+            .run(function(){
+                console.log("placed");
+                return callback(null, null)
+            })
+    })
+    .catch(function(err){
+        console.log("err occur------------------")
+        console.log(err)
+    })
 }
 function fillStartTime(daytime, worker){
-    var nightmare = worker.phantom;
     return new Promise(function(resolve, reject){
         if(daytime === '0'){
             return resolve()
         }else{
+            var nightmare = worker.phantom;
             var dayTimeArr = daytime.split('-');
             var day = dayTimeArr[0];
             var hour = dayTimeArr[1];
             var min = dayTimeArr[2];
-            console.log("day------" + day)
-            console.log("hour------" + hour)
-            console.log("min------" + min)
-            console.log("nightmare-------")
-            console.log(nightmare)
-            nightmare
+            nightmare.goto(sp.url + 'InsteadCar/fastCar')
+            .wait('div#userdaytime')
             .click('div#userdaytime')
-            .wait('div.dayGroup')
-            .click('div.dayGroup>a:nth-child(' + (day+1) + ')')
+            .wait()
+            .click('div.dayGroup>a:nth-child(' + (parseInt(day, 10)+1) + ')')
             .click('div.hourGroup>a[data="'+ hour +'"]')
             .click('div.minuteGroup>a[data="'+ min +'"]')
             .wait(200)
-            nightmare.run(function(err, nightmare){
-                if(err){
-                    return reject(err);
-                }else{
-                    return resolve();
-                }
-            })
-
+            resolve(nightmare);
         }
     })
 }
-function fillFromAddress(from, worker){
-    var nightmare = worker.phantom;
+function fillFromAddress(from, nightmare){
     return new Promise(function(resolve, reject){
         nightmare
-            .click('input#start_address')
             .type('input#start_address', from)
-            .wait('div._suggestbox:eq(4)>ul>li:nth-child(1)')
-            .click('div._suggestbox:eq(4)>ul>li:nth-child(1)')
+            .wait()
+            .evaluate(function(){
+                var list = document.querySelectorAll('div._suggestbox');
+                var item = list[4];
+                item.childNodes[0].childNodes[0].click()
+                return
+                //var e = document.createEvent('MouseEvents');
+                //e.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                //item.dispatchEvent(e);
+            }, function(item){
+                return;
+            })
             .wait(200)
-        nightmare.run(function(err, nightmare){
-            if(err){
-                return reject(err);
-            }else{
-                return resolve();
-            }
-        })
+        resolve(nightmare);
     })
 }
-function fillToAddress(to, worker){
-    var nightmare = worker.phantom;
-    return new Promise(function(resolve, reject){
+function fillToAddress(to, nightmare){
+    return new Promise(function(resolve, reject) {
         nightmare
-            .click('input#end_address')
             .type('input#end_address', to)
-            .wait('div._suggestbox:eq(5)>ul>li:nth-child(1)')
-            .click('div._suggestbox:eq(5)>ul>li:nth-child(1)')
+            .wait()
+            .evaluate(function () {
+                var list = document.querySelectorAll('div._suggestbox');
+                var item = list[5];
+                item.childNodes[0].childNodes[0].click();
+                return;
+            }, function(){
+                return;
+            })
             .wait(200)
-        nightmare.run(function(err, nightmare){
-            if(err){
-                return reject(err);
-            }else{
-                return resolve();
-            }
-        })
+        resolve(nightmare);
     })
 }
-function fillPhone(phone, worker){
-    var nightmare = worker.phantom;
+function fillPhone(phone, nightmare){
     return new Promise(function(resolve, reject){
         nightmare
             .click('input#phone')
             .type('input#phone', phone)
             .wait(200)
-        nightmare.run(function(err, nightmare){
-            if(err){
-                return reject(err);
-            }else{
-                return resolve(nightmare);
-            }
-        })
+        resolve(nightmare);
     })
 }
 module.exports = function(app){
