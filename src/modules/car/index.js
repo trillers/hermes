@@ -10,7 +10,9 @@ var co = require('co');
 var redis = require('redis');
 var orderFSM = require('./framework/FSM').orderWorkflow;
 var BizProcess ={
-    'callFastCar': 'callFastCar'
+    'callFastCar': 'callFastCar',
+    'cancelFastCar': 'cancelFastCar',
+    'orderMonitor': 'orderMonitor'
 };
 function CarApplication(){
     this.pubClient = redis.createClient();

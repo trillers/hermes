@@ -6,12 +6,16 @@ var request = require('request');
 var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673';
 var carKv = require('../kvs/Car');
 var orderFSM = require('../framework/FSM').orderWorkflow;
+var co = require('co');
 function init(app, cb){
     console.log('orderListMonitor is started');
     var nightmare = this.phantom;
     function next(){
+        request.cookie('../biznightmarecookie');
         request.get(sp.url + url, function(err, response, body){
-            if (!error && response.statusCode == 200) {
+            console.log("--------------------")
+            console.log(body)
+            if (!err && response.statusCode == 200) {
                 analysisOrderList(body.data, app, next);
             }
         });
@@ -72,12 +76,12 @@ function compactOrderList(preOrderList, orderList){
     return cmds;
 }
 
-function _getPreOrderList(callback){
+function _getPreOrderList(){
         return carKv.getOrderListAsync()
         .then(function(list){
-            callback(null, list);
+            Promise.resolve(list)
         }).catch(function(e){
-            callback(e, null)
+            Promise.reject(e)
         })
 }
 
