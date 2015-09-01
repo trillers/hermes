@@ -15,9 +15,16 @@ var BizProcess ={
 function CarApplication(){
     this.pubClient = redis.createClient();
     this.subClient = redis.createClient();
-    this.server = http.createServer();
+    this.server = http.createServer(testServer);
 }
 util.inherits(CarApplication, EventEmitter);
+function testServer(req, res){
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.write('<html><body>');
+    res.write('<h1>Hermes:</h1>');
+    res.write('<h2>I ... am ... wake up</h2>');
+    res.end('</body></html>');
+}
 function init(app, callback){
     app.on('startup', startupHandler(app, callback));
     Object.keys(orderFSM.actionsMap).forEach(function(key){
