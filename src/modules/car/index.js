@@ -16,8 +16,10 @@ function CarApplication(){
 }
 util.inherits(CarApplication, EventEmitter);
 function init(app, callback){
-    app.on('startup', workStartUpHandler(app, callback));
-    startupWorker(app)
+    ['startup', 'applying'].forEach(function(item){
+        app.on(item, eval(item + 'Handler')(app, callback))
+    });
+    startupWorker(app);
 }
 function startupWorker(app){
     for(var prop in BizProcess){
@@ -25,14 +27,18 @@ function startupWorker(app){
     }
     workerCount = Object.keys(BizProcess).length;
 }
-function workStartUpHandler(app, callback){
+function startupHandler(app){
     return function(){
         startedCount++;
         if(startedCount === workerCount){
             console.log('all startup');
             app.subClient.subscribe('call taxi');
-            callback(null, null)
         }
+    }
+}
+function applyingHandler(app){
+    return function(cmd){
+        app.pubClient.publish(cmd.name, cmd);
     }
 }
 CarApplication.prototype.handle = function(cmd){

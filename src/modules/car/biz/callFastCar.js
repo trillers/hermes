@@ -27,7 +27,6 @@ function handle(cmd, callback){
             })
     })
     .catch(function(err){
-        console.log("err occur------------------")
         console.log(err)
     })
 }
