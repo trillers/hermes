@@ -7,6 +7,7 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var co = require('co');
 var redis = require('redis');
+var orderFSM = require('./framework/FSM').orderWorkflow;
 var BizProcess ={
     'callFastCar': 'callFastCar'
 }
@@ -16,8 +17,9 @@ function CarApplication(){
 }
 util.inherits(CarApplication, EventEmitter);
 function init(app, callback){
-    ['startup', 'applying'].forEach(function(item){
-        app.on(item, eval(item + 'Handler')(app, callback))
+    app.on('startup', startupHandler(app, callback));
+    Object.keys(orderFSM.actionsMap).forEach(function(key){
+        app.on(key, defaultHandler(app, callback));
     });
     startupWorker(app);
 }
@@ -36,7 +38,7 @@ function startupHandler(app){
         }
     }
 }
-function applyingHandler(app){
+function defaultHandler(app){
     return function(cmd){
         app.pubClient.publish(cmd.name, cmd);
     }
@@ -46,9 +48,6 @@ CarApplication.prototype.handle = function(cmd){
 }
 var app = new CarApplication()
 init(app, function(){
-    //process.nextTick(function(){
-    //    app.handle({name: "callFastCar", from: "中关村软件园", to: "通县", startTime: "2-03-30", user: {phone: '13544565678'}})
-    //})
     app.subClient.on('message', function(channel, message){
         console.log('receive message==============');
         console.log(message);

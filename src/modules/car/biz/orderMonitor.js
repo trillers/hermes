@@ -22,7 +22,7 @@ function analysisOrderList(data, app, done){
         try{
             var orderList = data;
             var preOrderList = yield _getPreOrderList();
-            var cmds = yield compactOrderList(preOrderList, orderList);
+            var cmds = compactOrderList(preOrderList, orderList);
             cmds.forEach(function(cmd){
                 app.emit(cmd.name, cmd);
             });
@@ -36,7 +36,7 @@ function analysisOrderList(data, app, done){
     });
 }
 
-function* compactOrderList(preOrderList, orderList){
+function compactOrderList(preOrderList, orderList){
     var cmds = [];
     for(var i=0, len=orderList.length; i<len; i++){
         var currOrder = orderList[i];
@@ -70,16 +70,13 @@ function* compactOrderList(preOrderList, orderList){
     return cmds;
 }
 
-function _getPreOrderList(){
-    return new Promise(function(resolve, reject){
-        carKv.getOrderList(function(err, result){
-            if(!err){
-                resolve(result);
-            }else{
-                reject(err);
-            }
+function _getPreOrderList(callback){
+        return carKv.getOrderListAsync()
+        .then(function(list){
+            callback(null, list);
+        }).catch(function(e){
+            callback(e, null)
         })
-    })
 }
 
 function handle(cmd, callback){
