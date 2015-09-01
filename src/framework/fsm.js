@@ -28,8 +28,8 @@ function Workflow(data) {
     this.changed = false;
     this.listeners = {};
 }
-var composeActionFrom = _composeActionChannel('from')
-var composeActionTo = _composeActionChannel('to')
+var composeActionFrom = _composeActionChannel('from');
+var composeActionTo = _composeActionChannel('to');
 Workflow.prototype.compose = function(data){
     this.data = data;
     this.curr = data.initial;
@@ -37,28 +37,36 @@ Workflow.prototype.compose = function(data){
     _composeActions(actions, this);
     _attachListeners(data, this);
     return this;
-}
+};
+Workflow.prototype.getChange = function(prev, next){
+    this.actionList.forEach(function(action){
+        if((action.from === prev || action.from.indexOf && action.from.indexOf(prev) != -1) && (action.to === next || action.to.indexOf && action.to.to(next) != -1)){
+            return action.name;
+        }
+        return null;
+    })
+};
 Workflow.prototype.is = function (s){
     this.current() === s;
-}
+};
 Workflow.prototype.current = function (){
     return this.curr;
-}
+};
 Workflow.prototype.can = function(e){
     if(this.actionsMap[e].froms[this.current()]){
         return true;
     }
     return false;
-}
+};
 Workflow.prototype.setStt = function(s){
     if(!s || !this.statMap[s]){
         throw new Error('the stat is illegal');
     }
     this.curr = s;
-}
+};
 Workflow.prototype.cannot = function(e){
     return !this.can(e);
-}
+};
 Workflow.prototype.canInWild = function(e, stt){
     if(!this.actionsMap[e]){
         throw new Error('the action is illegal');
@@ -70,7 +78,7 @@ Workflow.prototype.canInWild = function(e, stt){
         return true;
     }
     return false;
-}
+};
 Workflow.prototype.transition = function(e, stt){
     if(this.canInWild(e, stt)){
         var tos = this.actionsMap[e].tos;
@@ -83,7 +91,7 @@ Workflow.prototype.transition = function(e, stt){
     }else{
         throw new Error('err Occur [code] can not transform the status');
     }
-}
+};
 Workflow.prototype.startup = function (){
     var me = this;
     this.actionList.forEach(function(action){
@@ -108,7 +116,7 @@ Workflow.prototype.startup = function (){
 
         }
     })
-}
+};
 function _composeActionChannel(type){
     return function(actionInMap, actionInLoop){
         if(Array.isArray(actionInLoop[type])){

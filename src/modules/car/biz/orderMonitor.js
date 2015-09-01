@@ -3,7 +3,9 @@ var Nightmare = require('nightmare');
 var carService = require('../services/CarService');
 var createWorker = require('./workerFactory');
 var request = require('request');
-var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673'
+var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673';
+var carKv = require('../kvs/Car');
+var orderFSM = require('../framework/FSM').orderWorkflow;
 function init(app, cb){
     function next(){
         request.get(sp.url + url, function(err, response, body){
@@ -12,30 +14,30 @@ function init(app, cb){
             }
         });
     }
-    cb(null, null)
     next();
-
+    cb(null, null);
 }
 function analysisOrderList(data, app, done){
     co(function* (){
-        var orderList = _.pick(data, 'order_status', 'order_id');
-        var preOrderList = yield _getPreOrderList();
-        var cmds = yield compactOrderList(preOrderList, orderList);
-        cmds.forEach(function(cmd){
-            app.emit(cmd.name, cmd);
-        });
-        setTimeout(function(){
-            done();
-        }, 2000);
+        try{
+            var orderList = data;
+            var preOrderList = yield _getPreOrderList();
+            var cmds = yield compactOrderList(preOrderList, orderList);
+            cmds.forEach(function(cmd){
+                app.emit(cmd.name, cmd);
+            });
+            setTimeout(function(){
+                done();
+            }, 2000);
+        }catch(e){
+            console.log('error Occur--------');
+            console.log(e)
+        }
     });
 }
 
 function* compactOrderList(preOrderList, orderList){
-    var cmds = [{
-        name: '',
-        id:'',
-        status: ''
-    }];
+    var cmds = [];
     for(var i=0, len=orderList.length; i<len; i++){
         var currOrder = orderList[i];
         var cmd = currOrder;
@@ -44,21 +46,24 @@ function* compactOrderList(preOrderList, orderList){
         if(preOrder){
             var preStatus = preOrder.status;
             var currStatus = currOrder.status;
-            cmd.name = '';
+            if(preStatus != currStatus){
+                cmd.name = orderFSM.getChange(preStatus, currStatus);
+                cmds.push(cmd);
+            }
             delete preOrderList[currOrder.id];
         }else{
             //not exist -- new one
-            cmd.name = 'addOrder';
+            cmd.name = 'place';
+            cmds.push(cmd)
         }
-        cmds.push(cmd);
     }
     //remain preOrderList -- cancel or done
     for(var i=0, len=preOrderList.length; i<len; i++){
         var cmd = preOrderList[i];
-        if(preOrderList[i].status === 'shangche'){
-            cmd.name = 'doneOrder';
+        if(preOrderList[i].status === 'Undertaken'){
+            cmd.name = 'complete';
         }else{
-            cmd.name = 'cancelOrder';
+            cmd.name = 'cancel';
         }
         cmds.push(cmd)
     }
@@ -67,7 +72,13 @@ function* compactOrderList(preOrderList, orderList){
 
 function _getPreOrderList(){
     return new Promise(function(resolve, reject){
-        resolve([{status: '111'}]);
+        carKv.getOrderList(function(err, result){
+            if(!err){
+                resolve(result);
+            }else{
+                reject(err);
+            }
+        })
     })
 }
 
