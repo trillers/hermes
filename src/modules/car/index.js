@@ -1,4 +1,5 @@
 var redis = require('redis');
+var http = require('http')
 var createDispatcher = require('./framework');
 var workerCount = 0;
 var startedCount = 0;
@@ -10,10 +11,11 @@ var redis = require('redis');
 var orderFSM = require('./framework/FSM').orderWorkflow;
 var BizProcess ={
     'callFastCar': 'callFastCar'
-}
+};
 function CarApplication(){
     this.pubClient = redis.createClient();
     this.subClient = redis.createClient();
+    this.server = http.createServer();
 }
 util.inherits(CarApplication, EventEmitter);
 function init(app, callback){
@@ -29,12 +31,13 @@ function startupWorker(app){
     }
     workerCount = Object.keys(BizProcess).length;
 }
-function startupHandler(app){
+function startupHandler(app, callback){
     return function(){
         startedCount++;
         if(startedCount === workerCount){
             console.log('all startup');
             app.subClient.subscribe('call taxi');
+            callback(null, null)
         }
     }
 }
@@ -45,9 +48,13 @@ function defaultHandler(app){
 }
 CarApplication.prototype.handle = function(cmd){
     BizProcess[cmd.name].handle(cmd);
-}
-var app = new CarApplication()
+};
+var app = new CarApplication();
 init(app, function(){
+    console.log("ok");
+    app.server.listen(3000, null, function(){
+        console.info('Hermes is wake up and listening on port in 3000');
+    });
     app.subClient.on('message', function(channel, message){
         console.log('receive message==============');
         console.log(message);
