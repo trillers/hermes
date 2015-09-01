@@ -44,6 +44,8 @@ init(app, function(){
     //    app.handle({name: "callFastCar", from: "中关村软件园", to: "通县", startTime: "2-03-30", user: {phone: '13544565678'}})
     //})
     app.subClient.on('message', function(channel, message){
+        console.log('receive message==============');
+        console.log(message);
         if(channel === 'call taxi'){
             process.nextTick(function(){
                 app.handle({name: "callFastCar", from: message.from, to: message.to, startTime: message.startTime, user: message.user})
