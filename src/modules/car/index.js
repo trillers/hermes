@@ -23,10 +23,12 @@ function testServer(req, res){
     res.write('<html><body>');
     res.write('<h1>Hermes:</h1>');
     res.write('<h2>I ... am ... wake up</h2>');
+    res.write('<h2>welcome...</h2>');
     res.end('</body></html>');
 }
 function init(app, callback){
     app.on('startup', startupHandler(app, callback));
+    app.on('error', defaultHandler(app, callback));
     Object.keys(orderFSM.actionsMap).forEach(function(key){
         app.on(key, defaultHandler(app, callback));
     });
@@ -53,8 +55,9 @@ function defaultHandler(app){
         app.pubClient.publish(cmd.name, cmd);
     }
 }
-CarApplication.prototype.handle = function(cmd){
-    BizProcess[cmd.name].handle(cmd);
+CarApplication.prototype.handle = function(cmd, cb){
+    var app = this;
+    BizProcess[cmd.name].handle(cmd, app, cb);
 };
 var app = new CarApplication();
 init(app, function(){
@@ -67,7 +70,13 @@ init(app, function(){
         console.log(message);
         if(channel === 'call taxi'){
             process.nextTick(function(){
-                app.handle({name: "callFastCar", from: message.from, to: message.to, startTime: message.startTime, user: message.user})
+                app.handle({
+                    name: "callFastCar",
+                    from: message.from,
+                    to: message.to,
+                    startTime: message.startTime,
+                    user: message.user
+                })
             })
         }
     })

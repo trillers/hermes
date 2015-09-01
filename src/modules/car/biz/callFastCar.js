@@ -3,7 +3,7 @@ var Nightmare = require('nightmare');
 var carService = require('../services/CarService');
 var createWorker = require('./workerFactory')
 
-function handle(cmd, callback){
+function handle(cmd, app, callback){
     var startTime = cmd.startTime;
     var fromAddress = cmd.from;
     var toAddress = cmd.to;
@@ -21,9 +21,15 @@ function handle(cmd, callback){
     })
     .then(function(nightmare){
         nightmare.click('#submitcall')
-            .run(function(){
-                console.log("succeed to place order");
-                return callback(null, null)
+            .run(function(err, nightmare){
+                if(!err){
+                    console.log("succeed to place order");
+                    callback && callback(null, null);
+                    app.emit('error', {code:0, msg:'下单失败'});
+                }else{
+                    callback && callback(new Error('下单失败'), null);
+                }
+
             })
     })
     .catch(function(err){

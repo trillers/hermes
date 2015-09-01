@@ -5,7 +5,7 @@ var createWorker = require('./workerFactory')
 var nameLocator = '.orderState>.sub>.section>.onCar>.name';
 var cancelSubmitBtnLocator = 'button.aui_state_highlight';
 
-function handle(cmd, callback){
+function handle(cmd, app, callback){
     var nightmare = this.phantom;
     var phone = cmd.user.phone;
     nightmare
@@ -21,6 +21,7 @@ function handle(cmd, callback){
         .click(cancelSubmitBtnLocator)
         .run(function(err, nightmare){
             if(!err){
+                app.emit('error', {code:0, msg:'下单失败'});
                 return callback(null, null)
             }
         })
