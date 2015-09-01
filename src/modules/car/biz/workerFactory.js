@@ -17,7 +17,7 @@ module.exports = function createWorker(app, handle, initFn){
 }
 function startUp(worker, application, initFn){
     if(initFn){
-        return initFn.call(null, app, function(err, data){
+        return initFn.call(worker, app, function(err, data){
             _init();
         })
     }

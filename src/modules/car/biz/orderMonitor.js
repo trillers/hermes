@@ -7,7 +7,8 @@ var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=14410770886
 var carKv = require('../kvs/Car');
 var orderFSM = require('../framework/FSM').orderWorkflow;
 function init(app, cb){
-    console.log('orderListMonitor is started')
+    console.log('orderListMonitor is started');
+    var nightmare = this.phantom;
     function next(){
         request.get(sp.url + url, function(err, response, body){
             if (!error && response.statusCode == 200) {

@@ -63,7 +63,7 @@ var app = new CarApplication();
 init(app, function(){
     console.log("ok");
     app.server.listen(3000, null, function(){
-        console.info('Hermes is wake up and listening on port in 3000');
+        console.info('Hermes has started and listening on port in 3000');
     });
     app.subClient.on('message', function(channel, message){
         console.log('receive message==============');
