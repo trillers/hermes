@@ -7,21 +7,32 @@ var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=14410770886
 var carKv = require('../kvs/Car');
 var orderFSM = require('../framework/FSM').orderWorkflow;
 var co = require('co');
+var PromiseB = require('bluebird');
+var phantom=require('phantom');
+var cookieLocator = '../../../../tmp/phantom_cookie';
 function init(app, cb){
-    console.log('orderListMonitor is started');
-    var nightmare = this.phantom;
+    this.phantom = phantom;
+    login(phantom, cb);
+}
+function postFn(callback){
+    var app = this;
     function next(){
-        request.cookie('../biznightmarecookie');
-        request.get(sp.url + url, function(err, response, body){
-            console.log("--------------------")
-            console.log(body)
-            if (!err && response.statusCode == 200) {
-                analysisOrderList(body.data, app, next);
+        console.log('Monitor is polling----------')
+        getRemoteOrderInfo(function(err, res){
+            if(res && res.data && res.data.length > 0){
+                analysisOrderList(res.data, app, function(){
+                    next();
+                })
+            }else{
+                setTimeout(function(){
+                    next();
+                }, 3000)
             }
+
         });
     }
     next();
-    cb(null, null);
+    callback();
 }
 function analysisOrderList(data, app, done){
     co(function* (){
@@ -34,7 +45,7 @@ function analysisOrderList(data, app, done){
             });
             setTimeout(function(){
                 done();
-            }, 2000);
+            }, 6000);
         }catch(e){
             console.log('error Occur--------');
             console.log(e)
@@ -88,8 +99,137 @@ function _getPreOrderList(){
 function handle(cmd, callback){
     callback(new Error('orderMonitor nothing to handle'), null)
 }
+function waitFor(checkFn, gap, timeout){
+    var args = [].slice.call(arguments);
+    if(args.length === 1){
+        return new Promise(function(resolve, reject){
+            setTimeout(function(){
+                resolve()
+            }, args[0])
+        })
+    }
+    var startTime = (new Date()).getTime();
+    return new Promise(function(resolve, reject){
+        var count = setInterval(function(){
+            if(((new Date()).getTime() - startTime) > timeout){
+                clearInterval(count)
+                reject(new Error('wait for something failed'));
+            }
+            var promise = checkFn.apply(null);
+            promise.then(function(result){
+                if(result){
+                    clearInterval(count)
+                    resolve(result)
+                }
+            })
+        }, gap)
+    })
+}
+function createProxy(page){
+    var pageProxy = {};
+    pageProxy.open=function(url, callback){
+        page.open(url, function(status){
+            callback(null, status)
+        });
+    };
+    pageProxy.evaluate=function(fn, callback){
+        page.evaluate(fn, function(result){
+            callback(null, result)
+        });
+    };
+    return pageProxy;
+}
+function login(phantom, callback){
+    phantom.create({parameters:{'cookies-file': cookieLocator}}, function (ph) {
+        ph.createPage(function (page) {
+            pageProxy = createProxy(page);
+            pageProxy = PromiseB.promisifyAll(pageProxy);
+            pageProxy.openAsync('http://es.xiaojukeji.com/Auth/login?__utm_source=nosource')
+                .then(function(){
+                    return pageProxy.evaluateAsync(function(){
+                        document.querySelector('#phone').focus();
+                    })
+                })
+                .then(function(){
+                    page.sendEvent('keypress', '15022539525', null, null, 0);
+                    return pageProxy.evaluateAsync(function(){
+                        document.querySelector('#password').focus();
+                    })
+                })
+                .then(function(){
+                    page.sendEvent('keypress', '40115891r', null, null, 0)
+                    return;
+                })
+                .then(function(){
+                    return pageProxy.evaluateAsync(function(){
+                        document.querySelector('input[type="submit"]').click()
+                    })
+                })
+                .then(function(){
+                    return pageProxy.evaluateAsync(function(){
+                        return document.title;
+                    })
+                })
+                .then(function(cookie){
+                    ph.exit();
+                    callback(null, null)
+                })
+                .catch(function(e){
+                    callback(e, null)
+                })
+        })
+    })
+}
+function getRemoteOrderInfo(callback) {
+    phantom.create({parameters: {'cookies-file': cookieLocator}}, function (ph) {
+        ph.createPage(function (page) {
+            pageProxy = createProxy(page);
+            pageProxy = PromiseB.promisifyAll(pageProxy);
+            pageProxy.openAsync('http://es.xiaojukeji.com')
+                .then(function (status) {
+                    return;
+                })
+                .then(function () {
+                    return waitFor(2000)
+                })
+                .then(function () {
+                    return pageProxy.evaluateAsync(function () {
+                        window._jsonpDate = null;
+                        var oAjax = new XMLHttpRequest();
+                        oAjax.open('GET', 'http://es.xiaojukeji.com/api/CallCar/getOrderList');
+                        oAjax.send();
+                        oAjax.onreadystatechange = function () {
+                            if (oAjax.readyState == 4) {
+                                if (oAjax.status == 200) {
+                                    window._jsonpDate = oAjax.responseText;
+                                } else {
+                                    Promise.reject(new Error('ajax failed'));
+                                }
+                            }
+                        };
+                    })
+                })
+                .then(function (result) {
+                    return waitFor(function () {
+                        return pageProxy.evaluateAsync(function () {
+                            return window._jsonpDate;
+                        })
+                    }, 100, 10000)
+                })
+                .then(function (result) {
+                    //ph.exit();
+                    callback(null, result)
+                })
+                .catch(function (e) {
+                    console.log('Failed to get remote order list');
+                    console.log(e)
+                    callback(e, null)
+                })
+        })
+    })
+}
 module.exports = function(app){
-    return createWorker(app, handle, init)
+    return createWorker(app, handle, init, postFn)
 };
 
 //{

@@ -12,7 +12,7 @@ var orderFSM = require('./framework/FSM').orderWorkflow;
 var BizProcess ={
     'callFastCar': 'callFastCar',
     'cancelFastCar': 'cancelFastCar',
-    //'orderMonitor': 'orderMonitor'
+    'orderMonitor': 'orderMonitor'
 };
 function CarApplication(){
     this.pubClient = redis.createClient();
@@ -30,9 +30,9 @@ function testServer(req, res){
 }
 function init(app, callback){
     app.on('startup', startupHandler(app, callback));
-    app.on('error', defaultHandler(app, callback));
+    app.on('error', defaultHandler(app));
     Object.keys(orderFSM.actionsMap).forEach(function(key){
-        app.on(key, defaultHandler(app, callback));
+        app.on(key, defaultHandler(app));
     });
     startupWorker(app);
 }
@@ -48,7 +48,22 @@ function startupHandler(app, callback){
         if(startedCount === workerCount){
             console.log('all startup');
             app.subClient.subscribe('call taxi');
-            callback(null, null)
+            startPostProcessHandler(app, callback)
+        }
+    }
+}
+function startPostProcessHandler(app, callback){
+    var postFnCount = 0,
+        doneCount = 0;
+    for(var workerName in BizProcess){
+        if(typeof BizProcess[workerName].postFn === 'function'){
+            postFnCount++;
+            BizProcess[workerName].postFn.call(null, function(){
+                doneCount++;
+                if(doneCount === postFnCount){
+                    callback(null, null);
+                }
+            });
         }
     }
 }

@@ -5,13 +5,17 @@ var Nightmare = require('nightmare');
 var thunkify = require('thunkify');
 var carService = require('../services/CarService');
 var co = require('co');
-module.exports = function createWorker(app, handle, initFn){
+var cookieLocator = '../../../tmp/nightmare_cookie'
+module.exports = function createWorker(app, handle, initFn, postFn){
     var worker = {};
     worker.dispatcher = createDispatcher();
     for(var i=0; i<3; i++){
         worker.dispatcher.registry(createQueue(1));
     }
     worker.handle = composeHandler(worker, handle);
+    if(postFn){
+        worker.postFn = postFn.bind(app);
+    }
     startUp(worker, app, initFn);
     return worker;
 }
@@ -22,8 +26,9 @@ function startUp(worker, application, initFn){
         })
     }
     _init();
+
     function _init(){
-        worker.phantom = new Nightmare({cookiesFile: __dirname + 'nightmarecookie'});
+        worker.phantom = new Nightmare({cookiesFile: cookieLocator});
         co(function* (){
             yield carService.signIn(worker.phantom);
             process.nextTick(function(){

@@ -49,25 +49,21 @@ function login(callback){
             pageProxy = PromiseB.promisifyAll(pageProxy);
             pageProxy.openAsync('http://es.xiaojukeji.com/Auth/login?__utm_source=nosource')
             .then(function(){
-                    console.log('1')
                 return pageProxy.evaluateAsync(function(){
                     document.querySelector('#phone').focus();
                 })
             })
             .then(function(){
-                    console.log('2')
                 page.sendEvent('keypress', '15022539525', null, null, 0);
                 return pageProxy.evaluateAsync(function(){
                     document.querySelector('#password').focus();
                 })
             })
             .then(function(){
-                    console.log('3')
                 page.sendEvent('keypress', '40115891r', null, null, 0)
                 return;
             })
             .then(function(){
-                    console.log('4')
                 return pageProxy.evaluateAsync(function(){
                     document.querySelector('input[type="submit"]').click()
                 })
@@ -93,10 +89,6 @@ function getRemoteOrderInfo(callback) {
             pageProxy = PromiseB.promisifyAll(pageProxy);
             pageProxy.openAsync('http://es.xiaojukeji.com')
                 .then(function (status) {
-                    var cookies = page.getCookies();
-                    console.log(page);
-                    console.log(cookies)
-                    console.log("opened google? ", status);
                     return;
                 })
                 .then(function () {
