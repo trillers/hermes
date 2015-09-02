@@ -12,7 +12,7 @@ var orderFSM = require('./framework/FSM').orderWorkflow;
 var BizProcess ={
     'callFastCar': 'callFastCar',
     'cancelFastCar': 'cancelFastCar',
-    'orderMonitor': 'orderMonitor'
+    //'orderMonitor': 'orderMonitor'
 };
 function CarApplication(){
     this.pubClient = redis.createClient();
