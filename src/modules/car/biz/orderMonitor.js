@@ -10,6 +10,11 @@ var co = require('co');
 var PromiseB = require('bluebird');
 var phantom=require('phantom');
 var cookieLocator = '../../../../tmp/phantom_cookie';
+var statusMap = {
+    '0': 'Applying',
+    '1': 'Undertaken',
+    '2': 'InService'
+}
 function init(app, cb){
     this.phantom = phantom;
     login(phantom, cb);
@@ -39,6 +44,11 @@ function analysisOrderList(data, app, done){
         try{
             var orderList = data;
             var preOrderList = yield _getPreOrderList();
+            if(!preOrderList){
+                orderList.forEach(function(cmd){
+                    return app.emit(getStatusMap(cmd.status), cmd)
+                })
+            }
             var cmds = compactOrderList(preOrderList, orderList);
             cmds.forEach(function(cmd){
                 app.emit(cmd.name, cmd);
@@ -227,6 +237,9 @@ function getRemoteOrderInfo(callback) {
                 })
         })
     })
+}
+function getStatusMap(originStatus){
+    return statusMap[originStatus];
 }
 module.exports = function(app){
     return createWorker(app, handle, init, postFn)
