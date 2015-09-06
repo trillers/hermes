@@ -51,7 +51,7 @@ function startupHandler(app, callback){
         startedCount++;
         if(startedCount === serviceCount){
             console.log('all startup');
-            app.subClient.subscribe('call taxi');
+            app.subClient.subscribe('call_car');
             startPostProcessHandler(app, callback)
         }
     }
@@ -85,7 +85,7 @@ init(app, function(){
     app.subClient.on('message', function(channel, message){
         console.log('receive message==============');
         console.log(message);
-        if(channel === 'call taxi'){
+        if(channel === 'call_car'){
             process.nextTick(function(){
                 app.handle({
                     name: "callFastCar",
@@ -98,4 +98,3 @@ init(app, function(){
         }
     })
 });
-
