@@ -1,6 +1,6 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
-var carService = require('../services/CarService');
+var carService = require('./CarService');
 var createService = require('./serviceFactory');
 var request = require('request');
 var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673';

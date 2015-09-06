@@ -1,5 +1,5 @@
 var Nightmare = require('nightmare');
-var nightmare = new Nightmare({cookiesFile: '../src/modules/car/biznightmarecookie'});
+var nightmare = new Nightmare({cookiesFile: '../src/modules/didi/biznightmarecookie'});
 nightmare.on('resourceReceived', function(data){
     console.log(data)
 })

@@ -1,4 +1,4 @@
-var cskv = require('../src/modules/car/kvs/Car')
+var cskv = require('../src/modules/didi/kvs/Car')
 var assert = require("assert");
 describe('init xiaoju auth', function(){
     var username = '15022539525';

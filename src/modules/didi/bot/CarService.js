@@ -2,7 +2,7 @@ var serviceItem = require('hermes-settings').serviceItem.car;
 var url = serviceItem.url;
 var cskv = require('../kvs/Car');
 var Nightmare = require('nightmare');
-var createProxy = require('../proxys/NightmareProxy');
+var createProxy = require('./nightmare/NightmareProxy');
 var Promise = require('bluebird')
 Nightmare = createProxy(Nightmare);
 

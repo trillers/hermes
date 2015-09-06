@@ -1,6 +1,6 @@
 var request = require('request');
 var phantom=require('phantom');
-var cookie = '../src/modules/car/biznightmarecookie';
+var cookie = '../src/modules/didi/biznightmarecookie';
 var PromiseB = require('bluebird');
 function createProxy(page){
     var pageProxy = {};

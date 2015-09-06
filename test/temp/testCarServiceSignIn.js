@@ -1,4 +1,4 @@
-var csService = require('../src/modules/car/services/CarService');
+var carService = require('../src/modules/didi/services/CarService');
 var assert = require("assert");
 var co = require('co');
 var Promise = require('bluebird')
@@ -10,7 +10,7 @@ describe('sign in didi', function(){
         co(function* (){
             var startTime = (new Date()).getTime();
             console.log(startTime)
-            yield csService.signIn();
+            yield carService.signIn();
             console.log('sign in operation\'s Execution time last: ' + ((new Date()).getTime()-startTime) + 'ms')
             done();
         })

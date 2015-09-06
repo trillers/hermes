@@ -1,5 +1,5 @@
-var dispatcher = require('../src/modules/car/framework')
-var createQueue = require('../src/modules/car/framework/MyQueue')
+var dispatcher = require('../src/modules/didi/framework')
+var createQueue = require('../src/modules/didi/framework/MyQueue')
 queue1 = createQueue(2);
 queue2 = createQueue(1);
 dispatcher.registry(queue1);

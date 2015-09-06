@@ -3,7 +3,7 @@ var http = require('http')
 var createDispatcher = require('./framework');
 var serviceCount = 0;
 var startedCount = 0;
-var carService = require('./services/CarService');
+var carService = require('./bot/CarService');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var co = require('co');
@@ -42,7 +42,7 @@ function init(app, callback){
 }
 function startupService(app){
     for(var prop in BizProcess){
-        BizProcess[prop] = require('./biz/' + prop)(app);
+        BizProcess[prop] = require('./bot/' + prop)(app);
     }
     serviceCount = Object.keys(BizProcess).length;
 }
