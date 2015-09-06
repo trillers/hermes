@@ -21,8 +21,10 @@ function handle(cmd, app, callback){
         .click(cancelSubmitBtnLocator)
         .run(function(err, nightmare){
             if(!err){
-                app.emit('error', {code:0, msg:'下单失败'});
                 return callback(null, null)
+            }else{
+                app.emit('error', {code:0, msg:'下单失败'});
+                return callback(new Error('下单失败'), null);
             }
         })
 }

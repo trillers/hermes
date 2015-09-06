@@ -25,9 +25,9 @@ function handle(cmd, app, callback){
                 if(!err){
                     console.log("succeed to place order");
                     callback && callback(null, null);
-                    app.emit('error', {code:0, message:'下单失败'});
                 }else{
-                    callback && callback(null, null);
+                    app.emit('error', {code:0, message:'下单失败'});
+                    callback && callback(new Error('下单失败'), null);
                 }
 
             })
