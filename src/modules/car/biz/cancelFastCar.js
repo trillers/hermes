@@ -1,7 +1,7 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
 var carService = require('../services/CarService');
-var createWorker = require('./workerFactory')
+var createService = require('./serviceFactory');
 var nameLocator = '.orderState>.sub>.section>.onCar>.name';
 var cancelSubmitBtnLocator = 'button.aui_state_highlight';
 
@@ -40,5 +40,5 @@ function _getPhoneNumber(str){
     return str.split(' ')[1];
 }
 module.exports = function(app){
-    return createWorker(app, handle)
+    return createService(app, handle)
 };

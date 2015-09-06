@@ -1,7 +1,7 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
 var carService = require('../services/CarService');
-var createWorker = require('./workerFactory');
+var createService = require('./serviceFactory');
 var request = require('request');
 var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673';
 var carKv = require('../kvs/Car');
@@ -247,7 +247,7 @@ function getStatusMap(originStatus){
     return statusMap[originStatus];
 }
 module.exports = function(app){
-    return createWorker(app, handle, init, postFn)
+    return createService(app, handle, init, postFn)
 };
 
 //{

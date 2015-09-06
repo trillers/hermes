@@ -6,40 +6,40 @@ var thunkify = require('thunkify');
 var carService = require('../services/CarService');
 var co = require('co');
 var cookieLocator = '../../../tmp/nightmare_cookie'
-module.exports = function createWorker(app, handle, initFn, postFn){
-    var worker = {};
-    worker.dispatcher = createDispatcher();
+module.exports = function createService(app, handle, initFn, postFn){
+    var service = {};
+    service.dispatcher = createDispatcher();
     //for(var i=0; i<3; i++){
-    worker.dispatcher.registry(createQueue(1));
+    service.dispatcher.registry(createQueue(1));
     //}
-    worker.handle = composeHandler(worker, handle);
+    service.handle = composeHandler(service, handle);
     if(postFn){
-        worker.postFn = postFn.bind(app);
+        service.postFn = postFn.bind(app);
     }
-    startUp(worker, app, initFn);
-    return worker;
+    startUp(service, app, initFn);
+    return service;
 }
-function startUp(worker, application, initFn){
+function startUp(service, application, initFn){
     if(initFn){
-        return initFn.call(worker, application, function(err, data){
+        return initFn.call(service, application, function(err, data){
             _init();
         })
     }
     _init();
 
     function _init(){
-        worker.phantom = new Nightmare({cookiesFile: cookieLocator});
+        service.phantom = new Nightmare({cookiesFile: cookieLocator});
         co(function* (){
-            yield carService.signIn(worker.phantom);
+            yield carService.signIn(service.phantom);
             process.nextTick(function(){
                 application.emit('startup')
             })
         })
     }
 }
-function composeHandler(worker, handle){
+function composeHandler(service, handle){
     return function(cmd){
-        var me = worker;
+        var me = service;
         var thunkHandler = thunkify(handle.bind(me));
         me.dispatcher.dispatch(thunkHandler(cmd), function(){})
     }

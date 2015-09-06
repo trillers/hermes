@@ -1,7 +1,7 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
 var carService = require('../services/CarService');
-var createWorker = require('./workerFactory')
+var createService = require('./serviceFactory')
 
 function handle(cmd, app, callback){
     var startTime = cmd.startTime;
@@ -36,12 +36,12 @@ function handle(cmd, app, callback){
         console.log(err)
     })
 }
-function fillStartTime(daytime, worker){
+function fillStartTime(daytime, service){
     return new Promise(function(resolve, reject){
         if(daytime === '0'){
             return resolve()
         }else{
-            var nightmare = worker.phantom;
+            var nightmare = service.phantom;
             var dayTimeArr = daytime.split('-');
             var day = dayTimeArr[0];
             var hour = dayTimeArr[1];
@@ -102,5 +102,5 @@ function fillPhone(phone, nightmare){
     })
 }
 module.exports = function(app){
-    return createWorker(app, handle)
+    return createService(app, handle)
 };

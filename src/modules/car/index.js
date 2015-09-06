@@ -1,7 +1,7 @@
 var redis = require('redis');
 var http = require('http')
 var createDispatcher = require('./framework');
-var workerCount = 0;
+var serviceCount = 0;
 var startedCount = 0;
 var carService = require('./services/CarService');
 var EventEmitter = require('events').EventEmitter;
@@ -38,18 +38,18 @@ function init(app, callback){
     Object.keys(orderFSM.actionsMap).forEach(function(key){
         app.on(key, defaultHandler(app));
     });
-    startupWorker(app);
+    startupService(app);
 }
-function startupWorker(app){
+function startupService(app){
     for(var prop in BizProcess){
         BizProcess[prop] = require('./biz/' + prop)(app);
     }
-    workerCount = Object.keys(BizProcess).length;
+    serviceCount = Object.keys(BizProcess).length;
 }
 function startupHandler(app, callback){
     return function(){
         startedCount++;
-        if(startedCount === workerCount){
+        if(startedCount === serviceCount){
             console.log('all startup');
             app.subClient.subscribe('call taxi');
             startPostProcessHandler(app, callback)
@@ -59,10 +59,10 @@ function startupHandler(app, callback){
 function startPostProcessHandler(app, callback){
     var postFnCount = 0,
         doneCount = 0;
-    for(var workerName in BizProcess){
-        if(typeof BizProcess[workerName].postFn === 'function'){
+    for(var serviceName in BizProcess){
+        if(typeof BizProcess[serviceName].postFn === 'function'){
             postFnCount++;
-            BizProcess[workerName].postFn.call(null, function(){
+            BizProcess[serviceName].postFn.call(null, function(){
                 doneCount++;
                 if(doneCount === postFnCount){
                     callback(null, null);
