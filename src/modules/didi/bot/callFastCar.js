@@ -1,6 +1,6 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
-var carService = require('./CarService');
+var signinBot = require('./SigninBot');
 var createService = require('./serviceFactory')
 
 function handle(cmd, app, callback){

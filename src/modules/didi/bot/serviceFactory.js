@@ -3,7 +3,7 @@ var createQueue = require('../framework/MyQueue');
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
 var thunkify = require('thunkify');
-var carService = require('./CarService');
+var signinBot = require('./SigninBot');
 var co = require('co');
 var cookieLocator = '../../../tmp/nightmare_cookie'
 module.exports = function createService(app, handle, initFn, postFn){
@@ -30,7 +30,7 @@ function startUp(service, application, initFn){
     function _init(){
         service.phantom = new Nightmare({cookiesFile: cookieLocator});
         co(function* (){
-            yield carService.signIn(service.phantom);
+            yield signinBot.signIn(service.phantom);
             process.nextTick(function(){
                 application.emit('startup')
             })

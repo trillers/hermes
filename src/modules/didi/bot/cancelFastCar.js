@@ -1,6 +1,6 @@
 var sp = require('hermes-settings').serviceItem.car;
 var Nightmare = require('nightmare');
-var carService = require('./CarService');
+var carService = require('./SigninBot');
 var createService = require('./serviceFactory');
 var nameLocator = '.orderState>.sub>.section>.onCar>.name';
 var cancelSubmitBtnLocator = 'button.aui_state_highlight';
