@@ -8,7 +8,7 @@ function handle(cmd, app, callback){
     var fromAddress = cmd.from;
     var toAddress = cmd.to;
     var userBiz = cmd.user;
-    var nightmare = this;
+    var nightmare = this.phantom;
     fillStartTime(startTime, nightmare)
     .then(function(nightmare){
         return fillFromAddress(fromAddress, nightmare);
@@ -25,9 +25,9 @@ function handle(cmd, app, callback){
                 if(!err){
                     console.log("succeed to place order");
                     callback && callback(null, null);
-                    app.emit('error', {code:0, msg:'下单失败'});
+                    app.emit('error', {code:0, message:'下单失败'});
                 }else{
-                    callback && callback(new Error('下单失败'), null);
+                    callback && callback(null, null);
                 }
 
             })
