@@ -49,6 +49,9 @@ function analysisOrderList(data, app, done){
                     return app.emit(getStatusMap(cmd.status), cmd)
                 })
             }
+            if(!orderList){
+                return;
+            }
             var cmds = compactOrderList(preOrderList, orderList);
             cmds.forEach(function(cmd){
                 app.emit(cmd.name, cmd);
@@ -74,23 +77,25 @@ function compactOrderList(preOrderList, orderList){
             var preStatus = preOrder.status;
             var currStatus = currOrder.status;
             if(preStatus != currStatus){
-                cmd.name = orderFSM.getChange(preStatus, currStatus);
+                cmd.name = getStatusMap(currStatus);
+                //cmd.name = orderFSM.getChange(preStatus, currStatus);
                 cmds.push(cmd);
             }
             delete preOrderList[currOrder.id];
         }else{
             //not exist -- new one
-            cmd.name = 'place';
-            cmds.push(cmd)
+            cmd.name = getStatusMap(currStatus);
+            //cmd.name = 'Applying';
+            cmds.push(cmd);
         }
     }
     //remain preOrderList -- cancel or done
     for(var i=0, len=preOrderList.length; i<len; i++){
         var cmd = preOrderList[i];
-        if(preOrderList[i].status === 'Undertaken'){
-            cmd.name = 'complete';
+        if(preOrderList[i].status === 'InService'){
+            cmd.name = 'Completed';
         }else{
-            cmd.name = 'cancel';
+            cmd.name = 'Cancelled';
         }
         cmds.push(cmd)
     }

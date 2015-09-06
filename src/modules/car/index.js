@@ -20,6 +20,10 @@ function CarApplication(){
     this.server = http.createServer(testServer);
 }
 util.inherits(CarApplication, EventEmitter);
+CarApplication.prototype.handle = function(cmd, cb){
+    var app = this;
+    BizProcess[cmd.name].handle(cmd, app, cb);
+};
 function testServer(req, res){
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.write('<html><body>');
@@ -72,10 +76,6 @@ function defaultHandler(app){
         app.pubClient.publish(cmd.name, cmd);
     }
 }
-CarApplication.prototype.handle = function(cmd, cb){
-    var app = this;
-    BizProcess[cmd.name].handle(cmd, app, cb);
-};
 var app = new CarApplication();
 init(app, function(){
     console.log("ok");
