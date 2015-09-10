@@ -1,6 +1,3 @@
-var callFastCarBot = require('../bot/callfastCar');
-var cancelFastCarBot = require('../bot/cancelFastCar');
-var orderMonitorBot = require('../bot/orderMonitor');
 var bot = require('../bot');
 var caseService = require('../../case/services/CaseService');
 var orderWf = require('../framework/FSM').orderWorkflow;
