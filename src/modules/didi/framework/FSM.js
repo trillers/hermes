@@ -21,7 +21,7 @@ var orderWorkflow = FSM.create({
         {name: 'OrderUndertaken', from: 'Applying', to: 'Undertaken'},
         {name: 'OrderInService', from: 'Undertaken', to: 'InService'},
         {name: 'OrderCompleted', from: 'InService', to: 'Completed'},
-        {name: 'OrderCancelled', from: _.values(stt), to: 'Cancelled'},
+        {name: 'OrderCancelled', from: ['Draft', 'Reviewing', 'Applying', 'Undertaken'], to: 'Cancelled'},
         {name: 'OrderApplyingTimeout', from: 'Applying', to: 'Timeout'}
     ]
 });

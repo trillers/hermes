@@ -1,41 +1,77 @@
 var serviceItem = require('hermes-settings').serviceItem.car;
 var url = serviceItem.url;
 var cskv = require('../kvs/Car');
-var createProxy = require('./nightmare/NightmareProxy');
-var Promise = require('bluebird')
-
-var Service = {}
-var locator = {
-    username:'#phone',
-    password:'#password',
-    submitInput: 'input[type="submit"]',
-    checkLogin: 'a.user-name'
-};
-
-function* signIn(nightmare){
-    try {
-        var username, password;
-        var info = yield cskv.getAuthInfoAsync();
+var waitFor = require('./helper').phantom.waitFor;
+var cookieLocator = '../../../../../tmp/phantom_cookies';
+var Promise = require('bluebird');
+var phantom = require('phantom');
+function signIn(callback){
+    var username, password;
+    cskv.getAuthInfoAsync()
+    .then(function(info){
         username = info.username;
         password = info.password;
-        var nightmare = nightmare || createProxy();
-            nightmare.goto(url + '/Auth/login')
-            .type(locator.username, username)
-            .type(locator.password, password)
-            .click(locator.submitInput)
-            .wait('a.user-name')
-            .evaluate(function(){
-                return document.title
-            }, function(title){
-                console.log('startup document title---------')
-                console.log(JSON.stringify(title));
+        phantom.create({parameters:{'cookies-file': cookieLocator}}, function (ph) {
+            ph.createPage(function (page) {
+                var pageProxy = createProxy(page);
+                pageProxy = Promise.promisifyAll(pageProxy);
+                pageProxy.openAsync('http://es.xiaojukeji.com/Auth/login?__utm_source=nosource')
+                    .then(function(){
+                        return waitFor(2000);
+                    })
+                    .then(function(){
+                        return pageProxy.evaluateAsync(function(){
+                            document.querySelector('#phone').focus();
+                        })
+                    })
+                    .then(function(){
+                        page.sendEvent('keypress', username, null, null, 0);
+                        return pageProxy.evaluateAsync(function(){
+                            document.querySelector('#password').focus();
+                        })
+                    })
+                    .then(function(){
+                        page.sendEvent('keypress', password, null, null, 0)
+                        return;
+                    })
+                    .then(function(){
+                        return pageProxy.evaluateAsync(function(){
+                            document.querySelector('input[type="submit"]').click()
+                        })
+                    })
+                    .then(function(){
+                        return pageProxy.evaluateAsync(function(){
+                            return document.title;
+                        })
+                    })
+                    .then(function(title){
+                        console.log("login succeed----------------");
+                        return waitFor(3000)
+                    })
+                    .then(function(){
+                        ph.exit();
+                        callback(null, null)
+                    })
+                    .catch(function(e){
+                        ph.exit();
+                        callback(e, null)
+                    })
             })
-        var result = yield nightmare.run();
-        return;
-    }catch(err){
-        console.log(err)
-    }
-};
-
-
-module.exports = signIn;
+        })
+    });
+}
+function createProxy(page){
+    var pageProxy = {};
+    pageProxy.open=function(url, callback){
+        page.open(url, function(status){
+            callback(null, status)
+        });
+    };
+    pageProxy.evaluate=function(fn, callback){
+        page.evaluate(fn, function(result){
+            callback(null, result)
+        });
+    };
+    return pageProxy;
+}
+module.exports = Promise.promisify(signIn);

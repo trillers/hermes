@@ -107,7 +107,7 @@ Service.on = function(type, callback){
             origin: originOrder.start_name,
             destination: originOrder.end_name,
         };
-        originOrder.driver_phone && json['driverPhone'];
+        originOrder.driver_phone && (json['driverPhone'] = originOrder.driver_phone);
         //save or update originOrder
         co(function* (){
             var caseObj = yield caseService.findOneByPhone({conditions:{phone: originOrder.passenger_phone}});

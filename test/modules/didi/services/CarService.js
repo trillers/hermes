@@ -48,29 +48,29 @@ setTimeout(function() {
             co(function* () {
                 var order = yield carService.submitFastCarOrder(mockId);
                 assert.equal(order.status, 're');
-                done();
+                //done();
             })
         })
-        it('the bot will cancel the order and return the order doc while updated it from db', function(done){
-            co(function* (){
-                var order = yield carService.cancelFastCarOrder(mockId);
-                console.log(order);
-                assert.equal(order.status, 'cc');
-                done();
-            })
-        })
+        //it('the bot will cancel the order and return the order doc while updated it from db', function(done){
+        //    co(function* (){
+        //        var order = yield carService.cancelFastCarOrder(mockId);
+        //        console.log(order);
+        //        assert.equal(order.status, 'cc');
+        //        done();
+        //    })
+        //})
     });
-    describe('get a FastCar order from db', function(){
-        it('just load the order doc from db', function(done){
-            co(function* () {
-                var order = yield carService.getFastCarOrder(mockId);
-                console.log('~~~~~~~~~~~~~~~~~~~~~~~~~')
-                console.log(order);
-                assert.ok(order._id);
-                done();
-            })
-        })
-    });
+    //describe('get a FastCar order from db', function(){
+    //    it('just load the order doc from db', function(done){
+    //        co(function* () {
+    //            var order = yield carService.getFastCarOrder(mockId);
+    //            console.log('~~~~~~~~~~~~~~~~~~~~~~~~~')
+    //            console.log(order);
+    //            assert.ok(order._id);
+    //            done();
+    //        })
+    //    })
+    //});
 
 
     run();

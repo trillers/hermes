@@ -17,7 +17,7 @@ var Bot = {};
 _mixin(Bot, new EventEmitter());
 function statUpMonitor(callback){
     var me = Bot;
-    console.log(me);
+    console.log("start monitor---------");
     function next(){
         console.log('Monitor is polling----------')
         getRemoteOrderInfo(function(err, res){
@@ -26,7 +26,15 @@ function statUpMonitor(callback){
                     next();
                 })
             }
+            if(res){
+                console.log("**************************");
+                console.log("get order list---------" + require('util').inspect(res));
+                console.log(res.data);
+                console.log(res.data.length);
+                console.log("**************************");
+            }
             if(res && res.data && res.data.length > 0){
+                console.log("enter check---------------")
                 analysisOrderList(res.data, me, function(orderList){
                     carKv.saveOrderListAsync(orderList)
                     .then(function(){
@@ -46,17 +54,24 @@ function statUpMonitor(callback){
     callback(null, null);
 }
 function analysisOrderList(data, monitor, done){
+    console.log("enter analysis---------------");
     co(function* (){
         try{
+            console.log("orderList---------------");
+            console.log(data);
             var orderList = data;
             var preOrderList = yield _getPreOrderList();
+            console.log("preOrderList---------------");
+            console.log(preOrderList);
             if(!preOrderList){
-                orderList.forEach(function(cmd){
-                    return monitor.emit(orderWf.getPrevAction(getStatusMap(cmd.order_status)), cmd)
+                console.log("no preOrderList---------------");
+                orderList.forEach(function(order){
+                    console.log("{{{{{{{{{{{{{{{{{{{{{{{{{{{");
+                    console.log("order.status---------------------"+order.status);
+                    console.log(getStatusMap(order.order_status));
+                    console.log("{{{{{{{{{{{{{{{{{{{{{{{{{{{");
+                    return monitor.emit(orderWf.getPrevAction(getStatusMap(order.order_status)), order)
                 })
-            }
-            if(!orderList){
-                return;
             }
             var cmds = compactOrderList(preOrderList, orderList);
             cmds.forEach(function(cmd){
@@ -73,15 +88,21 @@ function analysisOrderList(data, monitor, done){
 }
 
 function compactOrderList(preOrderList, orderList){
+    console.log("enter compact---------------");
     var cmds = [];
     for(var i=0, len=orderList.length; i<len; i++){
         var currOrder = orderList[i];
         var cmd = currOrder;
         //is exist
         var preOrder = preOrderList[currOrder.order_id];
+        console.log("preOrder---------------");
+        console.log(preOrder);
         if(preOrder){
+            console.log("preOrderIsExist---------------");
             var preStatus = preOrder.order_status;
+            console.log(preStatus);
             var currStatus = currOrder.order_status;
+            console.log(currStatus);
             if(preStatus != currStatus){
                 cmd.name = orderWf.getPrevAction(getStatusMap(currStatus));
                 //cmd.name = orderFSM.getChange(preStatus, currStatus);
@@ -89,6 +110,7 @@ function compactOrderList(preOrderList, orderList){
             }
             delete preOrderList[currOrder.order_id];
         }else{
+            console.log("new one---------------");
             //not exist -- new one
             cmd.name = orderWf.getPrevAction(getStatusMap(currStatus));
             //cmd.name = 'Applying';
@@ -111,9 +133,9 @@ function compactOrderList(preOrderList, orderList){
 function _getPreOrderList(){
         return carKv.getOrderListAsync()
         .then(function(list){
-            Promise.resolve(list)
+            PromiseB.resolve(list)
         }).catch(function(e){
-            Promise.reject(e)
+            PromiseB.reject(e)
         })
 }
 
@@ -221,8 +243,9 @@ function getRemoteOrderInfo(callback) {
                         })
                     }, 100, 10000)
                 })
-                .then(function (result) {
+                .then(function (data) {
                     //ph.exit();
+                    var result = JSON.parse(data)
                     callback(null, result)
                 })
                 .catch(function (e) {

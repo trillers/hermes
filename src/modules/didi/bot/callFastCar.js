@@ -7,7 +7,7 @@ var PromiseB = require('bluebird');
 var co = require('co');
 var EventEmitter = require('events').EventEmitter;
 var Bot = {};
-_mixin(Bot, new EventEmitter());
+_mixin(Bot, new EventEmitter())
 Bot.handle = function* callFastCar(order){
     try{
         var me = Bot;
@@ -29,13 +29,13 @@ Bot.handle = function* callFastCar(order){
     }catch(err){
         console.log('???????????????????????????????');
         console.log(err);
+        page.myPh.exit();
         if(err.message === 'no_login'){
             yield signinBot();
             yield callFastCar(order);
             return;
         }
         me.emit('OrderRejected', order);
-        page.myPh.exit();
         throw new Error('下单失败');
     }
 }
@@ -95,7 +95,7 @@ function* fillFromAddress(from, page){
        document.querySelector('input#start_address').focus();
     });
     page.sendEvent('keypress', from, null, null, 0);
-    yield waitFor(4000);
+    yield waitFor(5000);
     yield page.evaluateAsync(function(){
         var list = document.querySelectorAll('div._suggestbox');
         var item = list[4];
@@ -135,6 +135,7 @@ function* getSomeInfo(page){
     return price;
 }
 function* submitForm(page){
+    console.log("ok+++++++++++++++++++");
     yield page.evaluateAsync(function(){
         return document.querySelector('input#submitcall').click();
     });
