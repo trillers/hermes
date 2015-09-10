@@ -65,7 +65,7 @@ setTimeout(function() {
         })
         //it('the bot will cancel the order and return the order doc while updated it from db', function(done){
         //    co(function* (){
-        //        var order = yield carService.cancelFastCarOrder(mockId);
+        //        var order = yield carService.cancelOrder(mockId);
         //        console.log(order);
         //        assert.equal(order.status, 'cc');
         //        done();

@@ -30,7 +30,7 @@ app.use(function *pageNotFound(next) {
     this.response.body = yield render('404');
 });
 
-require('./pub-sub')(app);
+require('./pub-sub');
 
 //error
 app.on('error', function(err){

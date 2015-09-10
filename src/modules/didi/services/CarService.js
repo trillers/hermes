@@ -68,7 +68,7 @@ Service.getFastCarOrder = function* (orderId){
  * in applying or undertaken status on behalf of customer.
  * @param orderId
  */
-Service.cancelFastCarOrder = function* (orderId){
+Service.cancelOrder = function* (orderId){
     try{
         var orderDoc = yield caseService.load(orderId);
         yield bot.cancelFastCarOrder(orderDoc);
