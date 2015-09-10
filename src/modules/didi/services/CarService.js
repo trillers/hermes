@@ -1,10 +1,14 @@
 var callFastCarBot = require('../bot/callfastCar');
 var cancelFastCarBot = require('../bot/cancelFastCar');
 var orderMonitorBot = require('../bot/orderMonitor');
+var bot = require('../bot');
 var caseService = require('../../case/services/CaseService');
 var orderWf = require('../framework/FSM').orderWorkflow;
 var util = require('../../../app/util');
 var co = require('co');
+var OrderMap = {
+    OrderSubmit: OrderSubmitHandler
+}
 var Service = {}; //Pain object javascript service object
 
 /**
@@ -32,7 +36,7 @@ Service.submitFastCarOrder = function* (orderId){
     try{
         var orderDoc = yield caseService.load(orderId);
         orderDoc.useTime = util.dateStringify(orderDoc.useTime);
-        yield callFastCarBot.handle(orderDoc);
+        yield bot.createFastCarOrder(orderDoc);
         orderDoc.status = 're';
         yield caseService.update(orderId, orderDoc);
         return orderDoc;
@@ -67,7 +71,7 @@ Service.getFastCarOrder = function* (orderId){
 Service.cancelFastCarOrder = function* (orderId){
     try{
         var orderDoc = yield caseService.load(orderId);
-        yield cancelFastCarBot.handle(orderDoc);
+        yield bot.cancelFastCarOrder(orderDoc);
         var result = yield caseService.update(orderId, {status: 'cc'});
         return result;
     }catch(e){
@@ -87,20 +91,38 @@ Service.cancelFastCarOrder = function* (orderId){
  * OrderCompleted
  */
 Service.on = function(type, callback){
-    callFastCarBot.on(type, function(order){
-        co(function* (){
+    bot.on(type, function(type, order){
+        console.log("!!!!!!!!!!!!!!!!!!!!!!")
+        co(function*(){
             try{
-                var newOrder = yield caseService.update(order._id, {status: 're'});
-                callback(null, newOrder);
+                var newOrder = yield OrderMap[type](order);
+                return callback(newOrder)
             }catch(e){
-                callback(e, null);
+                return callback(e)
             }
         })
     });
-    orderMonitorBot.on(type, function(originOrder){
+};
+
+['OrderRejected', 'OrderApplying', 'OrderUndertaken', 'OrderCancelled', 'OrderApplyingTimeout', 'OrderInService', 'OrderCompleted'].forEach(function(eventName){
+    OrderMap[eventName] = OrderStatusModifyHandler
+});
+function* OrderSubmitHandler(type, order){
+    console.log("###########################")
+    try{
+        var newOrder = yield caseService.update(order._id, {status: 're'});
+        console.log("###########################")
+        callback(null, newOrder);
+    }catch(e){
+        callback(e, null);
+    }
+}
+function* OrderStatusModifyHandler(type, originOrder){
+    console.log("&&&&&&&&&&&&&&&&&&")
+    try {
         var json = {
             status: orderWf.getActionTo(type),
-            responsibleId :'xj',
+            responsibleId: 'xj',
             cost: originOrder.pre_total_fee,
             useTime: originOrder.departure_time,
             place: '',
@@ -109,20 +131,12 @@ Service.on = function(type, callback){
         };
         originOrder.driver_phone && (json['driverPhone'] = originOrder.driver_phone);
         //save or update originOrder
-        co(function* (){
-            var caseObj = yield caseService.findOneByPhone({conditions:{phone: originOrder.passenger_phone}});
-            var doc = yield caseService.update(caseObj._id, json);
-            return doc;
-        })
-        .then(function(doc){
-            callback(null, doc);
-        })
-        .catch(function(e){
-            callback(e, null)
-        })
-    });
-};
-
-orderMonitorBot.handle();
-
+        var caseObj = yield caseService.findOneByPhone({conditions: {phone: originOrder.passenger_phone}});
+        var doc = yield caseService.update(caseObj._id, json);
+        console.log("$$$$$$$$$$$$$$$$$$$$$")
+        return doc;
+    }catch(e){
+        throw e;
+    }
+}
 module.exports = Service;

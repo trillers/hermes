@@ -4,7 +4,8 @@
  * handler(order){
  * }
  */
-var emitter = new require('events').EventEmitter();
+var EventEmitter = require('events').EventEmitter;
+var emitter = new EventEmitter();
 
 //TODO: bind event handlers here
 

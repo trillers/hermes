@@ -14,7 +14,7 @@ setTimeout(function() {
             conversationId: '123',
             useTime: '2-03-30',
             origin: '西二旗',
-            destination: '北京南站1'
+            destination: '平谷'
         };
         it('just save the order to db and return the doc while saved', function(done){
             co(function* () {

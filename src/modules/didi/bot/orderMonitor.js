@@ -5,7 +5,7 @@ var co = require('co');
 var PromiseB = require('bluebird');
 var phantom=require('phantom');
 var cookieLocator = '../../../../../tmp/phantom_cookies';
-var EventEmitter = require('events').EventEmitter;
+var emitter = require('./emitter');
 var orderWf = require('../framework/FSM').orderWorkflow;
 var waitFor = require('./helper').phantom.waitFor;
 var statusMap = {
@@ -14,9 +14,8 @@ var statusMap = {
     '2': 'InService'
 };
 var Bot = {};
-_mixin(Bot, new EventEmitter());
 function statUpMonitor(callback){
-    var me = Bot;
+    var me = emitter;
     console.log("start monitor---------");
     function next(){
         console.log('Monitor is polling----------')

@@ -5,11 +5,10 @@ var waitFor = phantom.waitFor;
 var signinBot = require('./SigninBot');
 var cancelSubmitBtnLocator = 'button.aui_state_highlight';
 var PromiseB = require('bluebird');
-var EventEmitter = require('events').EventEmitter;
+var emitter = require('./emitter');
 var Bot = {};
-_mixin(Bot, new EventEmitter());
 function* cancelFastCar(order){
-    var me = Bot;
+    var me = emitter;
     var page = yield createPage();
     page.set('onConsoleMessage', function (msg) {
         console.log(msg)

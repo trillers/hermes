@@ -5,12 +5,11 @@ var waitFor = phantom.waitFor;
 var signinBot = require('./SigninBot');
 var PromiseB = require('bluebird');
 var co = require('co');
-var EventEmitter = require('events').EventEmitter;
+var emitter = require('./emitter');
 var Bot = {};
-_mixin(Bot, new EventEmitter())
 Bot.handle = function* callFastCar(order){
     try{
-        var me = Bot;
+        var me = emitter;
         var startTime = order.useTime;
         var fromAddress = order.subcase.origin;
         var toAddress = order.subcase.destination;
