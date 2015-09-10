@@ -1,10 +1,8 @@
 var serviceItem = require('hermes-settings').serviceItem.car;
 var url = serviceItem.url;
 var cskv = require('../kvs/Car');
-var Nightmare = require('nightmare');
 var createProxy = require('./nightmare/NightmareProxy');
 var Promise = require('bluebird')
-Nightmare = createProxy(Nightmare);
 
 var Service = {}
 var locator = {
@@ -14,15 +12,14 @@ var locator = {
     checkLogin: 'a.user-name'
 };
 
-var callFastCarNightMare = new Nightmare().goto('http://es.xiaojukeji.com/InsteadCar/fastCar')
-Service.signIn = function* (nightmare){
+function* signIn(nightmare){
     try {
         var username, password;
         var info = yield cskv.getAuthInfoAsync();
         username = info.username;
         password = info.password;
-        nightmare
-            .goto(url + '/Auth/login')
+        var nightmare = nightmare || createProxy();
+            nightmare.goto(url + '/Auth/login')
             .type(locator.username, username)
             .type(locator.password, password)
             .click(locator.submitInput)
@@ -39,18 +36,6 @@ Service.signIn = function* (nightmare){
         console.log(err)
     }
 };
-Service.callFastCar = function(json){
-    if(json.startTime !== '0'){
-        callFastCarNightMare.userdaytime
-    }
-        callFastCarNightMare
-        .type('input[title="Search"]', 'github nightmare')
-        .click('.searchsubmit')
-        .run(function (err, nightmare) {
-            if (err) return console.log(err);
-            console.log('Done!');
-        });
-};
 
 
-module.exports = Service;
+module.exports = signIn;

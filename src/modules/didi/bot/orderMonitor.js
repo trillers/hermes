@@ -1,52 +1,58 @@
 var sp = require('hermes-settings').serviceItem.car;
-var Nightmare = require('nightmare');
-var signinBot = require('./SigninBot');
-var createService = require('./serviceFactory');
-var request = require('request');
 var url = 'api/CallCar/getOrderList?callback=_4776213433ae01f2c6a9&_=1441077088673';
 var carKv = require('../kvs/Car');
-var orderFSM = require('../framework/FSM').orderWorkflow;
 var co = require('co');
 var PromiseB = require('bluebird');
 var phantom=require('phantom');
-var cookieLocator = '../../../../tmp/phantom_cookie';
+var cookieLocator = '../../../../../tmp/phantom_cookies';
+var EventEmitter = require('events').EventEmitter;
+var orderWf = require('../framework/FSM').orderWorkflow;
+var waitFor = require('./helper').phantom.waitFor;
 var statusMap = {
     '0': 'Applying',
     '1': 'Undertaken',
     '2': 'InService'
-}
-function init(app, cb){
-    this.phantom = phantom;
-    login(phantom, cb);
-}
-function postFn(callback){
-    var app = this;
+};
+var Bot = {};
+_mixin(Bot, new EventEmitter());
+function statUpMonitor(callback){
+    var me = Bot;
+    console.log(me);
     function next(){
         console.log('Monitor is polling----------')
         getRemoteOrderInfo(function(err, res){
-            if(res && res.data && res.data.length > 0){
-                analysisOrderList(res.data, app, function(){
+            if(err && err.message === 'no_login'){
+                return login(function(){
                     next();
                 })
-            }else{
-                setTimeout(function(){
-                    next();
-                }, 3000)
             }
-
+            if(res && res.data && res.data.length > 0){
+                analysisOrderList(res.data, me, function(orderList){
+                    carKv.saveOrderListAsync(orderList)
+                    .then(function(){
+                        next();
+                    });
+                })
+            }else{
+                process.nextTick(function(){
+                    setTimeout(function(){
+                        next();
+                    }, 3000)
+                })
+            }
         });
     }
     next();
-    callback();
+    callback(null, null);
 }
-function analysisOrderList(data, app, done){
+function analysisOrderList(data, monitor, done){
     co(function* (){
         try{
             var orderList = data;
             var preOrderList = yield _getPreOrderList();
             if(!preOrderList){
                 orderList.forEach(function(cmd){
-                    return app.emit(getStatusMap(cmd.status), cmd)
+                    return monitor.emit(orderWf.getPrevAction(getStatusMap(cmd.order_status)), cmd)
                 })
             }
             if(!orderList){
@@ -54,10 +60,10 @@ function analysisOrderList(data, app, done){
             }
             var cmds = compactOrderList(preOrderList, orderList);
             cmds.forEach(function(cmd){
-                app.emit(cmd.name, cmd);
+                monitor.emit(cmd.name, cmd);
             });
             setTimeout(function(){
-                done();
+                done(orderList);
             }, 6000);
         }catch(e){
             console.log('error Occur--------');
@@ -72,19 +78,19 @@ function compactOrderList(preOrderList, orderList){
         var currOrder = orderList[i];
         var cmd = currOrder;
         //is exist
-        var preOrder = preOrderList[currOrder.id];
+        var preOrder = preOrderList[currOrder.order_id];
         if(preOrder){
-            var preStatus = preOrder.status;
-            var currStatus = currOrder.status;
+            var preStatus = preOrder.order_status;
+            var currStatus = currOrder.order_status;
             if(preStatus != currStatus){
-                cmd.name = getStatusMap(currStatus);
+                cmd.name = orderWf.getPrevAction(getStatusMap(currStatus));
                 //cmd.name = orderFSM.getChange(preStatus, currStatus);
                 cmds.push(cmd);
             }
-            delete preOrderList[currOrder.id];
+            delete preOrderList[currOrder.order_id];
         }else{
             //not exist -- new one
-            cmd.name = getStatusMap(currStatus);
+            cmd.name = orderWf.getPrevAction(getStatusMap(currStatus));
             //cmd.name = 'Applying';
             cmds.push(cmd);
         }
@@ -93,9 +99,9 @@ function compactOrderList(preOrderList, orderList){
     for(var i=0, len=preOrderList.length; i<len; i++){
         var cmd = preOrderList[i];
         if(preOrderList[i].status === 'InService'){
-            cmd.name = 'Completed';
+            cmd.name = 'OrderCompleted';
         }else{
-            cmd.name = 'Cancelled';
+            cmd.name = 'OrderCancelled';
         }
         cmds.push(cmd)
     }
@@ -111,35 +117,6 @@ function _getPreOrderList(){
         })
 }
 
-function handle(cmd, callback){
-    callback(new Error('orderMonitor nothing to handle'), null)
-}
-function waitFor(checkFn, gap, timeout){
-    var args = [].slice.call(arguments);
-    if(args.length === 1){
-        return new Promise(function(resolve, reject){
-            setTimeout(function(){
-                resolve()
-            }, args[0])
-        })
-    }
-    var startTime = (new Date()).getTime();
-    return new Promise(function(resolve, reject){
-        var count = setInterval(function(){
-            if(((new Date()).getTime() - startTime) > timeout){
-                clearInterval(count)
-                reject(new Error('wait for something failed'));
-            }
-            var promise = checkFn.apply(null);
-            promise.then(function(result){
-                if(result){
-                    clearInterval(count)
-                    resolve(result)
-                }
-            })
-        }, gap)
-    })
-}
 function createProxy(page){
     var pageProxy = {};
     pageProxy.open=function(url, callback){
@@ -154,12 +131,15 @@ function createProxy(page){
     };
     return pageProxy;
 }
-function login(phantom, callback){
+function login(callback){
     phantom.create({parameters:{'cookies-file': cookieLocator}}, function (ph) {
         ph.createPage(function (page) {
             pageProxy = createProxy(page);
             pageProxy = PromiseB.promisifyAll(pageProxy);
             pageProxy.openAsync('http://es.xiaojukeji.com/Auth/login?__utm_source=nosource')
+                .then(function(){
+                    return waitFor(2000);
+                })
                 .then(function(){
                     return pageProxy.evaluateAsync(function(){
                         document.querySelector('#phone').focus();
@@ -185,7 +165,10 @@ function login(phantom, callback){
                         return document.title;
                     })
                 })
-                .then(function(cookie){
+                .then(function(title){
+                    return waitFor(3000)
+                })
+                .then(function(){
                     ph.exit();
                     callback(null, null)
                 })
@@ -204,8 +187,17 @@ function getRemoteOrderInfo(callback) {
                 .then(function (status) {
                     return;
                 })
-                .then(function () {
-                    return waitFor(2000)
+                .then(function(){
+                    return pageProxy.evaluateAsync(function(){
+                        return document.title;
+                    })
+                })
+                .then(function (title){
+                    if(title && title != '滴滴打车企业平台'){
+                        console.log(title);
+                        ph.exit();
+                        return PromiseB.reject(new Error('no_login'));
+                    }
                 })
                 .then(function () {
                     return pageProxy.evaluateAsync(function () {
@@ -217,8 +209,6 @@ function getRemoteOrderInfo(callback) {
                             if (oAjax.readyState == 4) {
                                 if (oAjax.status == 200) {
                                     window._jsonpDate = oAjax.responseText;
-                                } else {
-                                    Promise.reject(new Error('ajax failed'));
                                 }
                             }
                         };
@@ -237,7 +227,6 @@ function getRemoteOrderInfo(callback) {
                 })
                 .catch(function (e) {
                     console.log('Failed to get remote order list');
-                    console.log(e)
                     callback(e, null)
                 })
         })
@@ -246,9 +235,13 @@ function getRemoteOrderInfo(callback) {
 function getStatusMap(originStatus){
     return statusMap[originStatus];
 }
-module.exports = function(app){
-    return createService(app, handle, init, postFn)
-};
+function _mixin(target, source){
+    for(var prop in source){
+        target[prop] = source[prop];
+    }
+}
+Bot.handle = PromiseB.promisify(statUpMonitor)
+module.exports = Bot;
 
 //{
 //    status: 0,

@@ -7,7 +7,7 @@ var serviceProviderKey = function(){
     return 'sp:xj';
 }
 var orderListKey = function(){
-    return 'order:xj';
+    return 'orderlist:xj';
 }
 var kv = {}
 kv.getAuthInfo = function(callback){
@@ -34,6 +34,15 @@ kv.setAuthInfo = function(json, callback){
             err,
             'Fail to save service provider info: ' + err,
             'Succeed to save service provider info');
+        cbUtil.handleOk(callback, err, result, json);
+    })
+}
+kv.saveOrderList = function(json, callback){
+    redis.hmset(orderListKey(), json, function(err, result){
+        cbUtil.logCallback(
+            err,
+            'Fail to save order list: ' + err,
+            'Succeed to save order list');
         cbUtil.handleOk(callback, err, result, json);
     })
 }

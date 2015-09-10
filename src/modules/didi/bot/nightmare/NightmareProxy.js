@@ -1,6 +1,7 @@
 var Promise = require('bluebird');
-
-module.exports = function createProxy(Nightmare){
+var Nightmare = require('Nightmare')
+var cookieLocator = '../../../../../tmp/nightmare_cookie';
+function createProxy(){
     var nativeRun = Nightmare.prototype.run;
     var runAsync = Promise.promisify(nativeRun);
     Nightmare.prototype.run = function(){
@@ -8,5 +9,10 @@ module.exports = function createProxy(Nightmare){
         args.splice(0, args.length-1);
         return runAsync.apply(this, args)
     };
-    return Nightmare;
+    var nightmare = new Nightmare({cookiesFile: cookieLocator});
+    return nightmare;
 };
+
+module.exports = {
+    createProxy:createProxy
+}

@@ -51,6 +51,8 @@ if(commandType) {
     }else{
         console.log('illeage')
     }
-}/**
+}
+console.log('¥¥¥' + cmdWorkflow.getActionTo('bindUser'))
+/**
  * Created by bjhl on 15/8/24.
  */

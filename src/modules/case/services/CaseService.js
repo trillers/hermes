@@ -1,6 +1,7 @@
 var Case = require('../models/Case').model;
 var caseTaxiService = require('./CaseTaxiService');
 var caseCoffeeService = require('./CaseCoffeeService');
+var UserBiz = require('../../user/models/UserBiz');
 var CaseEnum = require('../../common/models/TypeRegistry').item('Case');
 var CaseStatus = require('../../common/models/TypeRegistry').item('CaseStatus');
 var settings = require('hermes-settings');
@@ -15,9 +16,9 @@ var Service = {};
 
 Service.load = function* (id) {
     try {
-        var doc = yield Case.findById(id).lean(true).exec();
-        var subcaseService = subcaseServiceMap[CaseStatus.name(doc.type)];
-        var subcase = yield subcaseService.loadAysnc(doc.subcase);
+        var doc = yield Case.findById(id).populate('commissionerId').lean(true).exec();
+        var subcaseService = subcaseServiceMap[CaseEnum.valueNames(doc.type)];
+        var subcase = yield subcaseService.loadAsync(doc.subcase);
         doc.subcase = subcase;
         logger.debug('Succeed to load  Case [id=' + id + ']');
         return doc;
@@ -30,12 +31,15 @@ Service.create = function* (json) {
     try{
         var subcaseService = subcaseServiceMap[CaseEnum.valueNames(json.type)];
         var abscase = new Case(json);
-        var resultArr = yield [abscase.save(), subcaseService.createAsync(json)];
-        var result = resultArr[0].toObject();
-        result.subcase = resultArr[1];
+        var subdoc = yield subcaseService.createAsync(json);
+        abscase.subcase = subdoc._id;
+        var casedoc = yield abscase.save();
+        var result = casedoc.toObject();
+        result.subcase = subdoc;
         logger.debug('Succeed to create Case: ' + require('util').inspect(result) + '\r\n');
         return result;
     }catch(e){
+        console.error(e)
         logger.error('Fail to create Case: ' + require('util').inspect(result) + '\r\n');
     }
 };
@@ -51,19 +55,39 @@ Service.delete = function* (id) {
 };
 
 Service.update = function* (id, update) {
-    var doc = Case.findByIdAndUpdate(id, update, {new: true}).exec();
-    logger.debug('Succeed to update Conversation [id=' + id + ']');
+    var doc = yield Case.findByIdAndUpdate(id, update, {new: true}).exec();
+    logger.debug('Succeed to update Case [id=' + id + ']');
     return doc;
 };
 
 Service.updateByCondition = function* (condition, update) {
     var doc = Case.findOneAndUpdate(condition, update, {new: true});
-    logger.debug('Succeed to update Conversation [id=' + doc._id + ']');
+    logger.debug('Succeed to update Case [id=' + doc._id + ']');
     return doc;
 };
 
+Service.findOneByPhone = function* (conditions){
+    try {
+        var findDoc = {}
+        var docs = yield Case.find({status: {$in: ['df', 're', 'ap', 'ut', 'is']}}).populate('commissionerId').lean(true).exec();
+        for(var i=0, len=docs.length; i<len; i++){
+            if(docs[i].commissionerId.phone === conditions.phone){
+                findDoc = docs[i];
+                break;
+            }
+        }
+        var subcaseService = subcaseServiceMap[CaseStatus.name(findDoc.type)];
+        var subcase = yield subcaseService.loadAysnc(doc.subcase);
+        doc.subcase = subcase;
+        logger.debug('Succeed to load  Case [id=' + id + ']');
+        return doc;
+    }catch(e){
+        logger.error('Fail to load Case [id=' + id + ']: ' + e);
+    }
+}
+
 Service.find = function* (params) {
-    var query = Conversation.find();
+    var query = Case.find();
 
     if (params.options) {
         query.setOptions(params.options);
@@ -92,7 +116,7 @@ Service.find = function* (params) {
 };
 
 Service.filter = function* (params) {
-    var query = Conversation.find();
+    var query = Case.find();
 
     if (params.options) {
         query.setOptions(params.options);

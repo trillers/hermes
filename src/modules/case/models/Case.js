@@ -11,16 +11,16 @@ var schema = DomainBuilder
     .withProperties({
         type: {type: String, enum: CaseEnum.valueList(), default: CaseEnum.Taxi.value(), require: true},
         desc: {type: String},
-        status: {type: String, enum: CaseStatusEnum.valueList(), default: CaseStatusEnum.UnPay.value()},
+        status: {type: String, enum: CaseStatusEnum.valueList(), default: CaseStatusEnum.Draft.value()},
         //commissionerId: {type: String, ref: 'Party', require: true},
         //responsibleId: {type: String, ref: 'Party', require: true},
         commissionerId: {type: String, ref: 'UserBiz', require: true},
-        responsibleId: {type: String, ref: 'Organization', require: true},
-        conversationId: {type: String, ref: 'Conversation', require: true},
+        responsibleId: {type: String, ref: 'Organization'},
+        conversationId: {type: String, ref: 'Conversation'},
         paymentMethod: {type: String},
         cost: {type: String},
         useTime: {type: Date, default: new Date(), require: true},
-        place: {type: String, require: true},
+        place: {type: String},
         evaluation: {type: String},
         subcase: {type: String, require: true}
     })

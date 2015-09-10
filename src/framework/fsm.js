@@ -79,6 +79,22 @@ Workflow.prototype.canInWild = function(e, stt){
     }
     return false;
 };
+Workflow.prototype.getActionTo = function(actionName){
+    for(var i = 0, len = this.actionList.length; i<len; i++){
+        var currAction = this.actionList[i];
+        if(currAction.name === actionName){
+            return currAction.to;
+        }
+    }
+}
+Workflow.prototype.getPrevAction = function(to){
+    for(var i = 0, len = this.actionList.length; i<len; i++){
+        if(this.actionList[i].to === to){
+            return this.actionList[i];
+        }
+    }
+    throw new Error('err Occur [code] this wf haven,t this status');
+}
 Workflow.prototype.transition = function(e, stt){
     if(this.canInWild(e, stt)){
         var tos = this.actionsMap[e].tos;

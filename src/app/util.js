@@ -60,7 +60,44 @@ function _sortStr(str1, str2) {
         }
     }
 }
-
+//2-03-30
+util.dateParse = function(str){
+    var now = new Date();
+    var nowyear = now.getFullYear();
+    var nowmonth = now.getMonth() + 1;
+    if(nowmonth.toString().length <2 ){
+        nowmonth = '0' + nowmonth;
+    }
+    var nowday = now.getDate();
+    if(nowday.toString().length <2 ){
+        nowday = '0' + nowday;
+    }
+    var day = str.split('-')[0];
+    var hour = str.split('-')[1];
+    var min = str.split('-')[2];
+    var timestamp = Date.parse(nowyear + '/' + nowmonth + '/' + nowday);
+    console.log(new Date(timestamp));
+    timestamp += (day*24*3600 + hour*3600 + min*60)*1000;
+    return new Date(timestamp);
+}
+util.dateStringify = function(date){
+    var now = new Date();
+    var nowday = now.getDate();
+    var day = date.getDate();
+    var hour = date.getHours();
+    if(hour.toString().length<2){
+        hour = '0' + hour;
+    }
+    var min = date.getMinutes();
+    if(min.toString().length<2){
+        min = '0' + min;
+    }
+    var dateArr = [];
+    dateArr.push(day-nowday);
+    dateArr.push(hour);
+    dateArr.push(min);
+    return dateArr.join('-');
+}
 module.exports = {
     extend: util.extend,
     extendAll: util.extendAll,
@@ -68,5 +105,7 @@ module.exports = {
     defaults: util.defaults,
     result: util.result,
     appendLine: util.appendLine,
-    genOneToOneId: util.genOneToOneId
+    genOneToOneId: util.genOneToOneId,
+    dateStringify: util.dateStringify,
+    dateParse: util.dateParse
 };
