@@ -20,12 +20,12 @@ kv.getAuthInfo = function(callback){
     });
 }
 kv.getOrderList = function(callback){
-    redis.hgetall(orderListKey(), function(err, result){
+    redis.get(orderListKey(), function(err, result){
         cbUtil.logCallback(
             err,
             'Fail to load order list info: ' + err,
             'Succeed to load order list info');
-        cbUtil.handleSingleValue(callback, err, result);
+        cbUtil.handleSingleValue(callback, err, JSON.parse(result));
     })
 }
 kv.setAuthInfo = function(json, callback){
@@ -38,7 +38,7 @@ kv.setAuthInfo = function(json, callback){
     })
 }
 kv.saveOrderList = function(json, callback){
-    redis.hmset(orderListKey(), json, function(err, result){
+    redis.set(orderListKey(), JSON.stringify(json), function(err, result){
         cbUtil.logCallback(
             err,
             'Fail to save order list: ' + err,

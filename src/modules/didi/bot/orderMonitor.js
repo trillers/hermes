@@ -35,8 +35,24 @@ function statUpMonitor(callback){
             }
             if(res && res.data && res.data.length > 0){
                 console.log("enter check---------------")
-                analysisOrderList(res.data, me, function(orderList){
-                    carKv.saveOrderListAsync(orderList)
+                analysisOrderList(res.data, me, function(err, orderList){
+                    if(err && err.message == 'no_modify'){
+                        console.log("test----------" + err);
+                        process.nextTick(function(){
+                            setTimeout(function(){
+                                next();
+                            }, 3000)
+                        });
+                        return;
+                    }
+                    var arr = [];
+                    orderList.forEach(function(order){
+                        if(!order.hasOwnProperty('order_status')){
+                            order.order_status = 0;
+                        }
+                        arr.push({order_id: order.order_id, order_status: order.order_status});
+                    });
+                    carKv.saveOrderListAsync(arr)
                     .then(function(){
                         next();
                     });
@@ -61,25 +77,30 @@ function analysisOrderList(data, monitor, done){
             console.log(data);
             var orderList = data;
             var preOrderList = yield _getPreOrderList();
-            console.log("preOrderList---------------");
-            console.log(preOrderList);
+            if(preOrderList){
+                console.log("preOrderList---------------");
+                console.log(typeof preOrderList[0]);
+                console.log(Array.isArray(preOrderList));
+            }
             if(!preOrderList){
                 console.log("no preOrderList---------------");
                 orderList.forEach(function(order){
                     console.log("{{{{{{{{{{{{{{{{{{{{{{{{{{{");
-                    console.log("order.status---------------------"+order.status);
+                    console.log("order.status---------------------"+order.order_status);
                     console.log(getStatusMap(order.order_status));
                     console.log("{{{{{{{{{{{{{{{{{{{{{{{{{{{");
-                    return monitor.emit(orderWf.getPrevAction(getStatusMap(order.order_status)), order)
-                })
+                    monitor.emit(orderWf.getPrevAction(getStatusMap(order.order_status || 0)), order)
+                });
+                return done(null, orderList);
             }
             var cmds = compactOrderList(preOrderList, orderList);
+            if(cmds.length <= 0){
+                return done(new Error('no_modify'), orderList);
+            }
             cmds.forEach(function(cmd){
                 monitor.emit(cmd.name, cmd);
             });
-            setTimeout(function(){
-                done(orderList);
-            }, 6000);
+            done(null, orderList);
         }catch(e){
             console.log('error Occur--------');
             console.log(e)
@@ -93,22 +114,24 @@ function compactOrderList(preOrderList, orderList){
     for(var i=0, len=orderList.length; i<len; i++){
         var currOrder = orderList[i];
         var cmd = currOrder;
+        var currStatus = currOrder.order_status || 0;
         //is exist
-        var preOrder = preOrderList[currOrder.order_id];
+        var metaData = existInPreOrder(preOrderList, currOrder);
+        var preOrder = metaData && metaData.preOrder || null;
+        var preIndex = metaData && metaData.index || null;
         console.log("preOrder---------------");
         console.log(preOrder);
         if(preOrder){
             console.log("preOrderIsExist---------------");
             var preStatus = preOrder.order_status;
             console.log(preStatus);
-            var currStatus = currOrder.order_status;
             console.log(currStatus);
             if(preStatus != currStatus){
                 cmd.name = orderWf.getPrevAction(getStatusMap(currStatus));
                 //cmd.name = orderFSM.getChange(preStatus, currStatus);
                 cmds.push(cmd);
             }
-            delete preOrderList[currOrder.order_id];
+            preOrderList.splice(preIndex, 1);
         }else{
             console.log("new one---------------");
             //not exist -- new one
@@ -120,7 +143,7 @@ function compactOrderList(preOrderList, orderList){
     //remain preOrderList -- cancel or done
     for(var i=0, len=preOrderList.length; i<len; i++){
         var cmd = preOrderList[i];
-        if(preOrderList[i].status === 'InService'){
+        if(preOrderList[i].order_status === '2'){
             cmd.name = 'OrderCompleted';
         }else{
             cmd.name = 'OrderCancelled';
@@ -129,11 +152,17 @@ function compactOrderList(preOrderList, orderList){
     }
     return cmds;
 }
-
+function existInPreOrder(preOrderList, currOrder){
+    for(var i=0, len=preOrderList.length; i<len; i++){
+        preOrderList[i].order_id === currOrder.order_id;
+        return {preOrder:preOrderList[i], index: i};
+    }
+    return null;
+}
 function _getPreOrderList(){
         return carKv.getOrderListAsync()
         .then(function(list){
-            PromiseB.resolve(list)
+            return list;
         }).catch(function(e){
             PromiseB.reject(e)
         })

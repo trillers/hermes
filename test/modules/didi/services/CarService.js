@@ -44,6 +44,18 @@ setTimeout(function() {
             })
             done();
         });
+        it('db will update the change of orders status when a order-cancelled event is triggered', function(done){
+            carService.on('OrderApplying', function(err, order){
+                console.log('a order had been applying[id]----' + order._id);
+            })
+            done();
+        });
+        it('db will update the change of orders status when a order-cancelled event is triggered', function(done){
+            carService.on('OrderUndertaken', function(err, order){
+                console.log('a order had been undertaken[id]----' + order._id);
+            })
+            done();
+        });
         it('the bot will place the order and return the order doc while updated it from db', function(done){
             co(function* () {
                 var order = yield carService.submitFastCarOrder(mockId);
