@@ -5,11 +5,11 @@ var pubSubService = {
     pubClient: pubClient,
     subClient: subClient
 };
-var channels = [
+var passiveChannels = [
     'submitFastCarOrder',
     'cancelOrder'
 ];
-var _channels = [
+var activeChannels = [
     'OrderRejected',
     'OrderApplying',
     'OrderUndertaken',
@@ -19,14 +19,14 @@ var _channels = [
     'OrderCompleted'
 ];
 //didi Service
-channels.forEach(function(channel){
+passiveChannels.forEach(function(channel){
     pubSubService.subClient.subscribe('DD' + channel);
 });
 pubSubService.subClient.on('message', function(channel, msg){
     var cmd = channel.substring(3);
     service[cmd](JSON.parse(msg));
 });
-_channels.forEach(function(channel){
+activeChannels.forEach(function(channel){
     service.on(channel, function(order){
         pubSubService.pubClient.publish('DD' + channel, JSON.stringify(order));
     });
