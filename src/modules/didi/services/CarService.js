@@ -45,7 +45,6 @@ Service.submitFastCarOrder = function* (orderId){
     // orderDoc.didiId =
     //update order record/document id, didiId
 };
-
 /**
  * load a order detail by order id.
  * @param orderId

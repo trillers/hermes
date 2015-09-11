@@ -29,7 +29,7 @@ function* cancelFastCar(order){
         var title = yield page.evaluateAsync(function(){
             return document.title;
         });
-        if(title !== '滴滴打车企业平台'){
+        if(title !== '滴滴出行企业平台'){
             throw new Error('no_login');
         }
         var phoneList = yield page.evaluateAsync(function(phone){

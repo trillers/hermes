@@ -51,7 +51,7 @@ function* fillStartTime(daytime, page){
             return document.title;
         });
         console.log('-----------'+title);
-        if(title !== '滴滴打车企业平台'){
+        if(title !== '滴滴出行企业平台'){
             console.log('**************************');
             throw new Error('no_login');
             return;

@@ -243,7 +243,7 @@ function getRemoteOrderInfo(callback) {
                     })
                 })
                 .then(function (title){
-                    if(title && title != '滴滴打车企业平台'){
+                    if(title && title != '滴滴出行企业平台'){
                         console.log(title);
                         ph.exit();
                         return PromiseB.reject(new Error('no_login'));
