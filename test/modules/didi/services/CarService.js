@@ -60,17 +60,17 @@ setTimeout(function() {
             co(function* () {
                 var order = yield carService.submitFastCarOrder(mockId);
                 assert.equal(order.status, 're');
-                //done();
+                done();
             })
         })
-        //it('the bot will cancel the order and return the order doc while updated it from db', function(done){
-        //    co(function* (){
-        //        var order = yield carService.cancelOrder(mockId);
-        //        console.log(order);
-        //        assert.equal(order.status, 'cc');
-        //        done();
-        //    })
-        //})
+        it('the bot will cancel the order and return the order doc while updated it from db', function(done){
+            co(function* (){
+                var order = yield carService.cancelOrder(mockId);
+                console.log(order);
+                assert.equal(order.status, 'cc');
+                done();
+            })
+        })
     });
     //describe('get a FastCar order from db', function(){
     //    it('just load the order doc from db', function(done){
@@ -89,4 +89,3 @@ setTimeout(function() {
 }, 3000);
 //超时            3
 //监听（取消，变化）1
-//应用程序对接     2

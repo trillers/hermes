@@ -27,8 +27,7 @@
     "request": "^2.61.0",
     "swig": "~1.2.2",
     "thunkify": "^2.1.2",
-    "underscore": "^1.8.3",
-    "wechat-api": "^1.9.4"
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "mocha": "^2.1.0"

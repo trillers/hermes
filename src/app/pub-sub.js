@@ -17,7 +17,7 @@ var _channels = [
     'OrderApplyingTimeout',
     'OrderInService',
     'OrderCompleted'
-]
+];
 //didi Service
 channels.forEach(function(channel){
     pubSubService.subClient.subscribe('DD' + channel);
@@ -28,7 +28,7 @@ pubSubService.subClient.on('message', function(channel, msg){
 });
 _channels.forEach(function(channel){
     service.on(channel, function(order){
-        pubSubService.pubClient.publish(channel, JSON.stringify(order));
+        pubSubService.pubClient.publish('DD' + channel, JSON.stringify(order));
     });
 });
 module.exports = null;
